@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Cyber Packet Quest</title>
+    <style>
+        body {
+            background: #0a192f;
+            color: #64ffda;
+            font-family: 'Courier New', monospace;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .game-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        #gameContainer {
+            position: relative;
+            width: 800px;
+            height: 500px;
+            border: 2px solid #64ffda;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #020c1b;
+            margin-bottom: 20px;
+        }
+
+        .control-panel {
+            background: rgba(10, 25, 47, 0.9);
+            padding: 20px;
+            border-radius: 10px;
+            width: 760px;
+            text-align: center;
+        }
+
+        #ipDisplay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #020c1b;
+            padding: 20px 40px;
+            border: 2px solid #64ffda;
+            border-radius: 8px;
+            font-size: 24px;
+            display: none;
+        }
+
+        input {
+            background: #020c1b;
+            border: 1px solid #64ffda;
+            color: #64ffda;
+            padding: 10px;
+            margin: 10px;
+            width: 200px;
+            text-align: center;
+        }
+
+        button {
+            background: #1a2a3a;
+            border: 1px solid #64ffda;
+            color: #64ffda;
+            padding: 10px 20px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #233554;
+        }
+
+        #hud {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(2, 12, 27, 0.8);
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .packet {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+            background: #64ffda;
+            border-radius: 50%;
+        }
+
+        #gameOver {
+            display: none;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #020c1b;
+            padding: 30px;
+            border: 2px solid #ff0000;
+            border-radius: 10px;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-header">
+        <h1>🌐 Cyber Packet Quest</h1>
+        <p>Nivel: <span id="currentLevel">1</span> | Puntos: <span id="score">0</span> | Vidas: <span id="lives">3</span></p>
+    </div>
+
+    <div id="gameContainer">
+        <div id="hud"></div>
+        <div id="ipDisplay"></div>
+        <div id="gameOver">
+            <h2>🚨 GAME OVER 🚨</h2>
+            <p>Puntos finales: <span id="finalScore">0</span></p>
+            <button onclick="resetGame()">Jugar de nuevo</button>
+        </div>
+    </div>
+
+    <div class="control-panel">
+        <input type="text" id="ipInput" placeholder="Ingresa la IP memorizada" disabled>
+        <br>
+        <button onclick="submitIP()">Enviar Paquete</button>
+    </div>
+
+    <script>
+        const levels = [
+            { time: 5000, targetIP: '192.168.1.1' },
+            { time: 4000, targetIP: '10.0.0.1' },
+            { time: 3000, targetIP: '172.16.0.5' },
+            { time: 2000, targetIP: '192.168.0.100' },
+            { time: 1500, targetIP: '10.1.1.1' }
+        ];
+
+        let currentLevel = 0;
+        let score = 0;
+        let lives = 3;
+        let currentPacket = null;
+        let timeoutId = null;
+
+        function initLevel() {
+            document.getElementById('ipInput').value = '';
+            document.getElementById('ipInput').disabled = true;
+            const level = levels[currentLevel];
+            
+            // Mostrar IP
+            const ipDisplay = document.getElementById('ipDisplay');
+            ipDisplay.textContent = level.targetIP;
+            ipDisplay.style.display = 'block';
+            
+            // Ocultar después del tiempo
+            timeoutId = setTimeout(() => {
+                ipDisplay.style.display = 'none';
+                document.getElementById('ipInput').disabled = false;
+                document.getElementById('ipInput').focus();
+            }, level.time);
+        }
+
+        function submitIP() {
+            const input = document.getElementById('ipInput').value;
+            const correctIP = levels[currentLevel].targetIP;
+            
+            if(input === correctIP) {
+                score += 100 * (currentLevel + 1);
+                document.getElementById('score').textContent = score;
+                animatePacket();
+                currentLevel++;
+                
+                if(currentLevel >= levels.length) {
+                    alert('¡Has completado todos los niveles!');
+                    resetGame();
+                    return;
+                }
+                
+                setTimeout(initLevel, 2000);
+            } else {
+                lives--;
+                document.getElementById('lives').textContent = lives;
+                
+                if(lives <= 0) {
+                    showGameOver();
+                } else {
+                    alert('¡IP incorrecta! Intenta de nuevo');
+                    initLevel();
+                }
+            }
+        }
+
+        function animatePacket() {
+            const container = document.getElementById('gameContainer');
+            const packet = document.createElement('div');
+            packet.className = 'packet';
+            packet.style.left = '50px';
+            packet.style.top = '250px';
+            container.appendChild(packet);
+
+            let pos = 50;
+            const animation = setInterval(() => {
+                pos += 5;
+                packet.style.left = pos + 'px';
+                
+                if(pos > 750) {
+                    clearInterval(animation);
+                    packet.remove();
+                }
+            }, 10);
+        }
+
+        function showGameOver() {
+            document.getElementById('gameOver').style.display = 'block';
+            document.getElementById('finalScore').textContent = score;
+            clearTimeout(timeoutId);
+        }
+
+        function resetGame() {
+            currentLevel = 0;
+            score = 0;
+            lives = 3;
+            document.getElementById('currentLevel').textContent = 1;
+            document.getElementById('score').textContent = 0;
+            document.getElementById('lives').textContent = 3;
+            document.getElementById('gameOver').style.display = 'none';
+            initLevel();
+        }
+
+        // Iniciar el juego
+        initLevel();
+    </script>
+</body>
+</html>
