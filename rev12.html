@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego de las Revoluciones Industriales</title>
+  <style>
+    /* Estilos CSS */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      color: #333;
+      text-align: center;
+      margin: 0;
+      padding: 0;
+    }
+
+    #game-container {
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    h1 {
+      color: #4CAF50;
+    }
+
+    #instructions {
+      font-size: 18px;
+      margin-bottom: 20px;
+    }
+
+    #options button {
+      display: block;
+      margin: 10px auto;
+      padding: 10px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 5px;
+      background-color: #007BFF;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+
+    #options button:hover {
+      background-color: #0056b3;
+    }
+
+    .correct {
+      background-color: #28a745 !important;
+      color: white;
+      cursor: default;
+    }
+
+    .incorrect {
+      background-color: #d9534f !important;
+      color: white;
+      cursor: default;
+    }
+
+    #feedback {
+      margin-top: 20px;
+      font-size: 18px;
+    }
+
+    #score {
+      font-size: 20px;
+      font-weight: bold;
+      color: #28a745;
+    }
+
+    #next-level {
+      margin-top: 20px;
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      display: none;
+    }
+
+    #next-level:hover {
+      background-color: #218838;
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <h1>¡Aprende sobre las Revoluciones Industriales!</h1>
+    <p id="instructions">Responde correctamente para ganar puntos y avanzar de nivel.</p>
+    <div id="game-content">
+      <p id="question"></p>
+      <div id="options"></div>
+      <p id="feedback"></p>
+    </div>
+    <p id="score">Puntos: 0</p>
+    <button id="next-level">Siguiente Nivel</button>
+  </div>
+
+  <script>
+    // Preguntas y respuestas
+    const questions = [
+      {
+        level: 1,
+        question: "¿En qué siglo ocurrió la Primera Revolución Industrial?",
+        options: ["Siglo XVIII", "Siglo XIX", "Siglo XVII"],
+        answer: "Siglo XVIII"
+      },
+      {
+        level: 1,
+        question: "¿Qué invento fue clave en la Primera Revolución Industrial?",
+        options: ["La máquina de vapor", "El teléfono", "El automóvil"],
+        answer: "La máquina de vapor"
+      },
+      {
+        level: 1,
+        question: "¿Qué país fue el epicentro de la Primera Revolución Industrial?",
+        options: ["Francia", "Reino Unido", "Alemania"],
+        answer: "Reino Unido"
+      },
+      {
+        level: 1,
+        question: "¿Qué recurso energético impulsó la Primera Revolución Industrial?",
+        options: ["Carbón", "Petróleo", "Energía solar"],
+        answer: "Carbón"
+      },
+      {
+        level: 2,
+        question: "¿Cuál fue una característica principal de la Segunda Revolución Industrial?",
+        options: ["Uso de energía eléctrica", "Invención de la imprenta", "Descubrimiento del fuego"],
+        answer: "Uso de energía eléctrica"
+      },
+      {
+        level: 2,
+        question: "¿Qué industria se desarrolló enormemente durante la Segunda Revolución Industrial?",
+        options: ["La industria textil", "La industria automotriz", "La agricultura"],
+        answer: "La industria automotriz"
+      },
+      {
+        level: 2,
+        question: "¿Qué científico contribuyó al desarrollo de la electricidad?",
+        options: ["Albert Einstein", "Nikola Tesla", "Isaac Newton"],
+        answer: "Nikola Tesla"
+      },
+      {
+        level: 2,
+        question: "¿Qué invento revolucionó la comunicación en la Segunda Revolución Industrial?",
+        options: ["El telégrafo", "El teléfono", "La radio"],
+        answer: "El teléfono"
+      },
+      {
+        level: 2,
+        question: "¿Qué proceso permitió la producción en masa durante la Segunda Revolución Industrial?",
+        options: ["Producción artesanal", "Línea de montaje", "Impresión 3D"],
+        answer: "Línea de montaje"
+      },
+      {
+        level: 2,
+        question: "¿Qué recurso energético sustituyó al carbón en la Segunda Revolución Industrial?",
+        options: ["Energía nuclear", "Gas natural", "Petróleo"],
+        answer: "Petróleo"
+      }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+
+    // Elementos del DOM
+    const questionElement = document.getElementById("question");
+    const optionsElement = document.getElementById("options");
+    const feedbackElement = document.getElementById("feedback");
+    const scoreElement = document.getElementById("score");
+    const nextLevelButton = document.getElementById("next-level");
+
+    // Función para cargar una pregunta
+    function loadQuestion() {
+      const currentQuestion = questions[currentQuestionIndex];
+      questionElement.textContent = currentQuestion.question;
+      optionsElement.innerHTML = "";
+      feedbackElement.textContent = "";
+
+      currentQuestion.options.forEach(option => {
+        const button = document.createElement("button");
+        button.textContent = option;
+        button.addEventListener("click", () => checkAnswer(button, option, currentQuestion.answer));
+        optionsElement.appendChild(button);
+      });
+
+      // Ocultar el botón "Siguiente Nivel"
+      nextLevelButton.style.display = "none";
+    }
+
+    // Función para verificar la respuesta
+    function checkAnswer(button, selectedOption, correctAnswer) {
+      if (selectedOption === correctAnswer) {
+        button.classList.add("correct");
+        score += 10;
+        scoreElement.textContent = `Puntos: ${score}`;
+        feedbackElement.textContent = "¡Respuesta correcta!";
+        feedbackElement.style.color = "#28a745";
+
+        // Mostrar el botón "Siguiente Nivel"
+        nextLevelButton.style.display = "block";
+      } else {
+        button.classList.add("incorrect");
+        feedbackElement.textContent = "Respuesta incorrecta. Intenta nuevamente.";
+        feedbackElement.style.color = "#d9534f";
+      }
+
+      // Desactivar todos los botones después de responder
+      Array.from(optionsElement.children).forEach(btn => {
+        btn.disabled = true;
+      });
+    }
+
+    // Evento para pasar al siguiente nivel
+    nextLevelButton.addEventListener("click", () => {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < questions.length) {
+        loadQuestion();
+      } else {
+        feedbackElement.textContent = "¡Felicidades! Has completado el juego.";
+        feedbackElement.style.color = "#28a745";
+        nextLevelButton.style.display = "none";
+      }
+    });
+
+    // Iniciar el juego
+    loadQuestion();
+  </script>
+</body>
+</html>
