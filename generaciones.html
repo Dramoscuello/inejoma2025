@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Generaciones Tech - Juego de Computación</title>
+    <style>
+        body {
+            font-family: 'Arial Rounded MT Bold', Arial, sans-serif;
+            background: linear-gradient(135deg, #00b4d8, #90e0ef);
+            color: #023e8a;
+            padding: 20px;
+            margin: 0;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.9);
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.2);
+        }
+
+        h1 {
+            text-align: center;
+            color: #03045e;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .score-board {
+            text-align: right;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .question-container {
+            background: #caf0f8;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            animation: slideIn 0.5s ease;
+        }
+
+        .options-container {
+            display: grid;
+            gap: 10px;
+        }
+
+        .option-btn {
+            background: #ade8f4;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+        }
+
+        .option-btn:hover {
+            background: #90e0ef;
+            transform: scale(1.02);
+        }
+
+        .option-btn.correct {
+            background: #80ff9f !important;
+            animation: pulse 0.5s;
+        }
+
+        .option-btn.incorrect {
+            background: #ff8080 !important;
+            animation: shake 0.3s;
+        }
+
+        .next-btn {
+            background: #0077b6;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 25px;
+            cursor: pointer;
+            float: right;
+            margin-top: 20px;
+            transition: all 0.3s ease;
+        }
+
+        .next-btn:hover {
+            background: #023e8a;
+            transform: scale(1.05);
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .result-screen {
+            text-align: center;
+            padding: 30px;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(5px); }
+            50% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+            100% { transform: translateX(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🕹️ Generaciones Tech 🖥️</h1>
+        <div class="score-board">Puntos: <span id="score">0</span></div>
+        
+        <div id="game-container">
+            <div class="question-container">
+                <h2 id="question"></h2>
+                <div class="options-container" id="options"></div>
+            </div>
+            <button id="next-btn" class="next-btn hidden">Siguiente ➡️</button>
+        </div>
+
+        <div id="result-screen" class="result-screen hidden">
+            <h2>🎉 ¡Juego completado! 🎉</h2>
+            <p>Tu puntuación final: <span id="final-score">0</span></p>
+            <button onclick="location.reload()">Jugar de nuevo 🔄</button>
+        </div>
+    </div>
+
+    <script>
+        const questions = [
+            {
+                question: "¿Qué caracterizó principalmente a la segunda generación de computadoras?",
+                options: ["Válvulas de vacío", "Transistores", "Circuitos integrados", "Inteligencia Artificial"],
+                correct: 1,
+                generation: 2
+            },
+            {
+                question: "¿En qué generación se introdujeron los sistemas operativos?",
+                options: ["Segunda", "Tercera", "Quinta", "Primera"],
+                correct: 1,
+                generation: 3
+            },
+            {
+                question: "¿Qué tecnología permite a la quinta generación aprender y adaptarse?",
+                options: ["Machine Learning", "Transistores", "Tarjetas perforadas", "COBOL"],
+                correct: 0,
+                generation: 5
+            },
+            {
+                question: "¿Cuál era el lenguaje principal de la tercera generación?",
+                options: ["Ensamblador", "FORTRAN", "COBOL", "Python"],
+                correct: 2,
+                generation: 3
+            },
+            {
+                question: "¿Qué caracteriza la quinta generación de computadoras?",
+                options: ["Uso de IA", "Circuitos integrados", "Computadoras personales", "Válvulas termoiónicas"],
+                correct: 0,
+                generation: 5
+            }
+        ];
+
+        let currentQuestion = 0;
+        let score = 0;
+        let multiplier = 1;
+
+        function showQuestion() {
+            const question = questions[currentQuestion];
+            document.getElementById('question').textContent = question.question;
+            const optionsContainer = document.getElementById('options');
+            optionsContainer.innerHTML = '';
+            
+            question.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.className = 'option-btn';
+                button.textContent = option;
+                button.onclick = () => selectAnswer(index);
+                optionsContainer.appendChild(button);
+            });
+            
+            document.getElementById('next-btn').classList.add('hidden');
+        }
+
+        function selectAnswer(selectedIndex) {
+            const question = questions[currentQuestion];
+            const buttons = document.querySelectorAll('.option-btn');
+            
+            buttons.forEach(button => button.disabled = true);
+            
+            if (selectedIndex === question.correct) {
+                buttons[selectedIndex].classList.add('correct');
+                score += 10 * multiplier;
+                multiplier++;
+            } else {
+                buttons[selectedIndex].classList.add('incorrect');
+                // Removida la línea que mostraba la respuesta correcta
+                multiplier = 1;
+            }
+            
+            document.getElementById('score').textContent = score;
+            document.getElementById('next-btn').classList.remove('hidden');
+        }
+
+        function nextQuestion() {
+            currentQuestion++;
+            if (currentQuestion < questions.length) {
+                showQuestion();
+            } else {
+                showFinalResults();
+            }
+        }
+
+        function showFinalResults() {
+            document.getElementById('game-container').classList.add('hidden');
+            document.getElementById('result-screen').classList.remove('hidden');
+            document.getElementById('final-score').textContent = score;
+            
+            const resultEmoji = score >= 40 ? '🚀' : score >= 30 ? '😎' : '🤔';
+            document.getElementById('result-screen').querySelector('h2').innerHTML += ` ${resultEmoji}`;
+        }
+
+        document.getElementById('next-btn').addEventListener('click', nextQuestion);
+        showQuestion();
+    </script>
+</body>
+</html>
