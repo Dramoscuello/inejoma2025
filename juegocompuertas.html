@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego Interactivo: Trivia de Compuertas Lógicas</title>
+  <style>
+    /* Estilos CSS */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .game-container {
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    }
+
+    .question {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+    }
+
+    .options button {
+      padding: 10px 20px;
+      margin: 5px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      background-color: #007bff;
+      color: white;
+      font-size: 16px;
+    }
+
+    .options button:hover {
+      background-color: #0056b3;
+    }
+
+    .score {
+      margin-top: 20px;
+      font-size: 1.5em;
+      color: #28a745;
+    }
+
+    .leaderboard {
+      margin-top: 30px;
+      text-align: left;
+    }
+
+    .leaderboard h2 {
+      color: #333;
+    }
+
+    .leaderboard ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .leaderboard li {
+      margin: 5px 0;
+      font-size: 1.1em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Juego Interactivo: Trivia de Compuertas Lógicas</h1>
+  <div class="game-container">
+    <div id="start-screen">
+      <h2>¡Bienvenido al Juego!</h2>
+      <label for="player-name">Ingresa tu nombre:</label>
+      <input type="text" id="player-name" placeholder="Tu nombre">
+      <button onclick="startGame()">Comenzar</button>
+    </div>
+
+    <div id="game-screen" style="display: none;">
+      <div class="question" id="question"></div>
+      <div class="options" id="options"></div>
+      <div class="score" id="score">Puntos: 0</div>
+    </div>
+
+    <div id="end-screen" style="display: none;">
+      <h2>¡Juego Terminado!</h2>
+      <p>Tu puntuación final es: <span id="final-score"></span></p>
+      <button onclick="restartGame()">Volver a Jugar</button>
+    </div>
+
+    <div class="leaderboard" id="leaderboard">
+      <h2>Tabla de Líderes</h2>
+      <ul id="leaderboard-list"></ul>
+    </div>
+  </div>
+
+  <script>
+    // JavaScript
+
+    const questions = [
+      { question: "¿Cuál es la salida de una compuerta AND si ambas entradas son 1?", options: [0, 1], answer: 1 },
+      { question: "¿Cuál es la salida de una compuerta OR si ambas entradas son 0?", options: [0, 1], answer: 0 },
+      { question: "¿Cuál es la salida de una compuerta NAND si ambas entradas son 1?", options: [0, 1], answer: 0 },
+      { question: "¿Cuál es la salida de una compuerta NOR si ambas entradas son 0?", options: [0, 1], answer: 1 },
+      { question: "¿Cuál es la salida de una compuerta XOR si las entradas son diferentes?", options: [0, 1], answer: 1 }
+    ];
+
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let playerName = "";
+    const leaderboard = [];
+
+    function startGame() {
+      playerName = document.getElementById("player-name").value;
+      if (!playerName) {
+        alert("Por favor, ingresa tu nombre.");
+        return;
+      }
+
+      document.getElementById("start-screen").style.display = "none";
+      document.getElementById("game-screen").style.display = "block";
+      loadQuestion();
+    }
+
+    function loadQuestion() {
+      if (currentQuestionIndex >= questions.length) {
+        endGame();
+        return;
+      }
+
+      const currentQuestion = questions[currentQuestionIndex];
+      document.getElementById("question").textContent = currentQuestion.question;
+
+      const optionsContainer = document.getElementById("options");
+      optionsContainer.innerHTML = "";
+
+      currentQuestion.options.forEach(option => {
+        const button = document.createElement("button");
+        button.textContent = option;
+        button.onclick = () => checkAnswer(option);
+        optionsContainer.appendChild(button);
+      });
+    }
+
+    function checkAnswer(selectedOption) {
+      const currentQuestion = questions[currentQuestionIndex];
+      if (selectedOption === currentQuestion.answer) {
+        score++;
+        document.getElementById("score").textContent = `Puntos: ${score}`;
+      }
+
+      currentQuestionIndex++;
+      loadQuestion();
+    }
+
+    function endGame() {
+      document.getElementById("game-screen").style.display = "none";
+      document.getElementById("end-screen").style.display = "block";
+      document.getElementById("final-score").textContent = score;
+
+      // Agregar jugador a la tabla de líderes
+      leaderboard.push({ name: playerName, score: score });
+      leaderboard.sort((a, b) => b.score - a.score); // Ordenar por puntaje descendente
+      updateLeaderboard();
+    }
+
+    function restartGame() {
+      currentQuestionIndex = 0;
+      score = 0;
+      document.getElementById("end-screen").style.display = "none";
+      document.getElementById("start-screen").style.display = "block";
+      document.getElementById("score").textContent = "Puntos: 0";
+    }
+
+    function updateLeaderboard() {
+      const leaderboardList = document.getElementById("leaderboard-list");
+      leaderboardList.innerHTML = "";
+
+      leaderboard.forEach((player, index) => {
+        const listItem = document.createElement("li");
+        listItem.textContent = `${index + 1}. ${player.name}: ${player.score} puntos`;
+        leaderboardList.appendChild(listItem);
+      });
+    }
+  </script>
+</body>
+</html>
