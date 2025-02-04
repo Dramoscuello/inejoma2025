@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Aprende con Drag and Drop</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+
+        .contenedor-columnas {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+        }
+
+        .columna {
+            width: 200px;
+            padding: 15px;
+            border: 2px dashed #666;
+            border-radius: 10px;
+            text-align: center;
+            background-color: #f0f0f0;
+        }
+
+        .palabras-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .palabra {
+            padding: 10px 15px;
+            background-color: #e3e3e3;
+            border-radius: 5px;
+            cursor: move;
+            user-select: none;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 18px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        .correcto {
+            background-color: #90EE90 !important;
+        }
+
+        .incorrecto {
+            background-color: #FF9999 !important;
+        }
+
+        #animacion {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            justify-content: center;
+            align-items: center;
+            font-size: 100px;
+            color: #FFD700;
+            animation: brillo 1s infinite;
+        }
+
+        @keyframes brillo {
+            0% { text-shadow: 0 0 20px #FFD700; }
+            50% { text-shadow: 0 0 30px #FFFFFF; }
+            100% { text-shadow: 0 0 20px #FFD700; }
+        }
+    </style>
+</head>
+<body>
+    <div class="contenedor-columnas">
+        <div class="columna" data-categoria="invencion">INVENCIÓN</div>
+        <div class="columna" data-categoria="innovacion">INNOVACIÓN</div>
+        <div class="columna" data-categoria="descubrimiento">DESCUBRIMIENTO</div>
+    </div>
+
+    <div class="palabras-container">
+        <div class="palabra" draggable="true" data-respuesta="invencion">Luz eléctrica</div>
+        <div class="palabra" draggable="true" data-respuesta="descubrimiento">Fósiles de dinosaurio</div>
+        <div class="palabra" draggable="true" data-respuesta="innovacion">Smartphone con cámara</div>
+        <div class="palabra" draggable="true" data-respuesta="descubrimiento">Gravedad</div>
+        <div class="palabra" draggable="true" data-respuesta="invencion">Rueda</div>
+        <div class="palabra" draggable="true" data-respuesta="innovacion">Internet en el celular</div>
+      
+        <div class="palabra" draggable="true" data-respuesta="invencion">Radio</div>
+        <div class="palabra" draggable="true" data-respuesta="descubrimiento">Oro</div>
+        <div class="palabra" draggable="true" data-respuesta="innovacion">SmartWatch</div>
+        <div class="palabra" draggable="true" data-respuesta="descubrimiento">Fuego</div>
+        <div class="palabra" draggable="true" data-respuesta="invencion">Bicicleta</div>
+        <div class="palabra" draggable="true" data-respuesta="innovacion">Smart TV</div>
+    </div>
+
+    <button onclick="comprobarRespuestas()">COMPROBAR</button>
+    <div id="animacion">¡FELICIDADES!</div>
+
+    <script>
+        let draggedItem = null;
+
+        document.querySelectorAll('.palabra').forEach(palabra => {
+            palabra.addEventListener('dragstart', () => {
+                draggedItem = palabra;
+            });
+        });
+
+        document.querySelectorAll('.columna').forEach(columna => {
+            columna.addEventListener('dragover', e => e.preventDefault());
+            
+            columna.addEventListener('drop', e => {
+                e.preventDefault();
+                if (draggedItem) {
+                    columna.appendChild(draggedItem);
+                    draggedItem.style.margin = '5px';
+                }
+            });
+        });
+
+        function comprobarRespuestas() {
+            let todasCorrectas = true;
+            
+            document.querySelectorAll('.palabra').forEach(palabra => {
+                const categoriaCorrecta = palabra.dataset.respuesta;
+                const categoriaActual = palabra.closest('.columna')?.dataset.categoria;
+                
+                if (categoriaCorrecta === categoriaActual) {
+                    palabra.classList.remove('incorrecto');
+                    palabra.classList.add('correcto');
+                } else {
+                    palabra.classList.remove('correcto');
+                    palabra.classList.add('incorrecto');
+                    todasCorrectas = false;
+                }
+            });
+
+            if (todasCorrectas) {
+                document.getElementById('animacion').style.display = 'flex';
+                setTimeout(() => {
+                    document.getElementById('animacion').style.display = 'none';
+                }, 3000);
+            }
+        }
+    </script>
+</body>
+</html>
