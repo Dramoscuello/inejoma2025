@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Caza Palabras en el Espacio</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #000;
+      color: #fff;
+      margin: 0;
+      padding: 0;
+    }
+    h1 {
+      margin-top: 20px;
+    }
+    #game-container {
+      display: flex;
+      align-items: flex-start;
+      margin-top: 20px;
+    }
+    #word-list {
+      width: 200px;
+      text-align: left;
+      margin-right: 20px;
+    }
+    #word-list h2 {
+      font-size: 20px;
+      margin-bottom: 10px;
+    }
+    #word-list ul {
+      list-style-type: none;
+      padding: 0;
+    }
+    #word-list li {
+      margin: 5px 0;
+      padding: 5px 10px;
+      background-color: #ff9800;
+      border-radius: 5px;
+      color: #000;
+      font-size: 16px;
+    }
+    #board {
+      display: grid;
+      grid-template-columns: repeat(10, 40px);
+      gap: 5px;
+    }
+    .letter {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #333;
+      border: 1px solid #555;
+      cursor: pointer;
+      font-size: 18px;
+      color: #fff;
+    }
+    .letter.selected {
+      background-color: #ff9800;
+    }
+    #score {
+      margin-top: 20px;
+      font-size: 24px;
+    }
+    #timer {
+      margin-top: 10px;
+      font-size: 20px;
+    }
+    #end-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background-color: rgba(0, 0, 0, 0.8);
+      color: white;
+      font-size: 48px;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+  </style>
+</head>
+<body>
+  <h1>Caza Palabras en el Espacio</h1>
+  <div id="game-container">
+    <!-- Lista de palabras -->
+    <div id="word-list">
+      <h2>Palabra a encontrar:</h2>
+      <ul id="words"></ul>
+    </div>
+
+    <!-- Tablero y controles -->
+    <div>
+      <div id="board"></div>
+      <div id="score">Puntuación: 0</div>
+      <div id="timer">Tiempo restante: 60 segundos</div>
+    </div>
+  </div>
+  <div id="end-screen">
+    <p id="end-message"></p>
+  </div>
+
+  <script>
+    const boardSize = 10; // Tamaño del tablero (10x10)
+    const words = ["CARRO", "MOTO", "CELULAR", "RELOJ", "COBRE", "FUEGO", "LUZ", "ESPEJO", "ZAPATO", "ARENA", "SOL", "CAJAS", "HIERRO", "PESCADO", "MADERA"];
+    const letters = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+    let board = [];
+    let selectedLetters = [];
+    let score = 0;
+    let timeLeft = 60;
+    let targetWord = ""; // La palabra objetivo
+
+    // Seleccionar una palabra al azar
+    function selectRandomWord() {
+      return words[Math.floor(Math.random() * words.length)];
+    }
+
+    // Mostrar la palabra objetivo en la lista
+    function showTargetWord() {
+      const wordListElement = document.getElementById("words");
+      wordListElement.innerHTML = ""; // Limpiar la lista anterior
+      const li = document.createElement("li");
+      li.textContent = targetWord;
+      wordListElement.appendChild(li);
+    }
+
+    // Crear el tablero
+    function createBoard() {
+      const boardElement = document.getElementById("board");
+      boardElement.innerHTML = ""; // Limpiar el tablero anterior
+      board = [];
+
+      for (let i = 0; i < boardSize * boardSize; i++) {
+        const letter = document.createElement("div");
+        letter.classList.add("letter");
+        letter.textContent = letters[Math.floor(Math.random() * letters.length)];
+        letter.addEventListener("click", () => selectLetter(letter));
+        board.push(letter);
+        boardElement.appendChild(letter);
+      }
+
+      // Colocar la palabra objetivo en el tablero
+      placeWord(targetWord);
+    }
+
+    // Colocar la palabra objetivo en el tablero
+    function placeWord(word) {
+      const maxAttempts = 100; // Máximo número de intentos para evitar bucles infinitos
+      let attempts = 0;
+
+      while (attempts < maxAttempts) {
+        const direction = Math.random() < 0.5 ? "horizontal" : "vertical";
+        const row = Math.floor(Math.random() * boardSize);
+        const col = Math.floor(Math.random() * boardSize);
+
+        if (direction === "horizontal" && col + word.length <= boardSize) {
+          let valid = true;
+          for (let i = 0; i < word.length; i++) {
+            if (board[row * boardSize + col + i].textContent !== "") {
+              valid = false;
+              break;
+            }
+          }
+          if (valid) {
+            for (let i = 0; i < word.length; i++) {
+              board[row * boardSize + col + i].textContent = word[i];
+            }
+            return; // Palabra colocada con éxito
+          }
+        } else if (direction === "vertical" && row + word.length <= boardSize) {
+          let valid = true;
+          for (let i = 0; i < word.length; i++) {
+            if (board[(row + i) * boardSize + col].textContent !== "") {
+              valid = false;
+              break;
+            }
+          }
+          if (valid) {
+            for (let i = 0; i < word.length; i++) {
+              board[(row + i) * boardSize + col].textContent = word[i];
+            }
+            return; // Palabra colocada con éxito
+          }
+        }
+
+        attempts++;
+      }
+
+      console.warn(`No se pudo colocar la palabra: ${word}`);
+    }
+
+    // Seleccionar una letra
+    function selectLetter(letter) {
+      if (!selectedLetters.includes(letter)) {
+        letter.classList.add("selected");
+        selectedLetters.push(letter);
+        checkWord();
+      }
+    }
+
+    // Verificar si la palabra seleccionada es válida
+    function checkWord() {
+      const selectedText = selectedLetters.map(l => l.textContent).join("");
+      if (selectedText === targetWord) {
+        score += targetWord.length * 10;
+        document.getElementById("score").textContent = `Puntuación: ${score}`;
+        selectedLetters.forEach(l => l.style.visibility = "hidden");
+        selectedLetters = [];
+        endGame(true); // El jugador ganó
+      }
+    }
+
+    // Temporizador
+    function startTimer() {
+      const timerElement = document.getElementById("timer");
+      const interval = setInterval(() => {
+        timeLeft--;
+        timerElement.textContent = `Tiempo restante: ${timeLeft} segundos`;
+        if (timeLeft === 0) {
+          clearInterval(interval);
+          endGame(false); // El jugador perdió
+        }
+      }, 1000);
+    }
+
+    // Finalizar el juego
+    function endGame(won) {
+      const endScreen = document.getElementById("end-screen");
+      const endMessage = document.getElementById("end-message");
+
+      if (won) {
+        endMessage.textContent = "¡FELICIDADES!";
+      } else {
+        endMessage.textContent = "GAME OVER";
+      }
+
+      endScreen.style.display = "flex";
+    }
+
+    // Reiniciar el juego
+    function restartGame() {
+      // Reiniciar variables
+      score = 0;
+      timeLeft = 60;
+      selectedLetters = [];
+      document.getElementById("score").textContent = `Puntuación: ${score}`;
+      document.getElementById("timer").textContent = `Tiempo restante: ${timeLeft} segundos`;
+      document.getElementById("end-screen").style.display = "none";
+
+      // Seleccionar una nueva palabra al azar
+      targetWord = selectRandomWord();
+      showTargetWord();
+      createBoard();
+      startTimer();
+    }
+
+    // Iniciar el juego por primera vez
+    targetWord = selectRandomWord();
+    showTargetWord();
+    createBoard();
+    startTimer();
+
+    // Agregar botón de reinicio
+    const restartButton = document.createElement("button");
+    restartButton.textContent = "Reiniciar Juego";
+    restartButton.style.marginTop = "20px";
+    restartButton.style.padding = "10px 20px";
+    restartButton.style.fontSize = "16px";
+    restartButton.style.backgroundColor = "#007bff";
+    restartButton.style.color = "white";
+    restartButton.style.border = "none";
+    restartButton.style.cursor = "pointer";
+    restartButton.style.borderRadius = "5px";
+    restartButton.addEventListener("click", restartGame);
+    document.body.appendChild(restartButton);
+  </script>
+</body>
+</html>
