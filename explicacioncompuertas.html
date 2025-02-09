@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Compuertas Lógicas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+    }
+    .slides {
+      display: flex;
+      overflow-x: auto;
+      scroll-snap-type: x mandatory;
+      gap: 20px;
+      padding: 20px;
+    }
+    .slide {
+      flex: none;
+      width: 80%;
+      max-width: 600px;
+      margin: 0 auto;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      scroll-snap-align: start;
+      padding: 20px;
+      text-align: center;
+    }
+    .slide h2 {
+      color: #007BFF;
+    }
+    table {
+      margin: 20px auto;
+      border-collapse: collapse;
+      width: 100%;
+    }
+    table, th, td {
+      border: 1px solid #ddd;
+    }
+    th, td {
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #007BFF;
+      color: white;
+    }
+    .controls {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 10px;
+    }
+    .controls button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .controls button:hover {
+      background-color: #0056b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="slides" id="slides">
+    <div class="slide">
+      <h2>¿Qué son las compuertas lógicas?</h2>
+      <p>Las <strong>compuertas lógicas</strong> son componentes básicos en los circuitos electrónicos que procesan información en forma de <strong>ceros (0)</strong> y <strong>unos (1)</strong>, representando <strong>falso</strong> y <strong>verdadero</strong>.</p>
+      <p>Son como pequeños "interruptores" que toman decisiones basadas en reglas específicas.</p>
+    </div>
+    <div class="slide">
+      <h2>Compuerta AND</h2>
+      <p><strong>Regla:</strong> La salida es <strong>1</strong> solo si <strong>todas las entradas son 1</strong>. Si alguna entrada es 0, la salida será 0.</p>
+      <table>
+        <tr>
+          <th>Entrada A</th>
+          <th>Entrada B</th>
+          <th>Salida</th>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+        </tr>
+      </table>
+    </div>
+    <div class="slide">
+      <h2>Compuerta OR</h2>
+      <p><strong>Regla:</strong> La salida es <strong>1</strong> si <strong>al menos una de las entradas es 1</strong>. Solo da <strong>0</strong> cuando todas las entradas son 0.</p>
+      <table>
+        <tr>
+          <th>Entrada A</th>
+          <th>Entrada B</th>
+          <th>Salida</th>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>1</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>1</td>
+          <td>1</td>
+        </tr>
+      </table>
+    </div>
+    <div class="slide">
+      <h2>Compuerta NAND</h2>
+      <p><strong>Regla:</strong> Es lo contrario de la compuerta AND. La salida es <strong>0</strong> solo si <strong>todas las entradas son 1</strong>. En cualquier otro caso, la salida es <strong>1</strong>.</p>
+      <table>
+        <tr>
+          <th>Entrada A</th>
+          <th>Entrada B</th>
+          <th>Salida</th>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>1</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+      </table>
+    </div>
+    <div class="slide">
+      <h2>Compuerta NOR</h2>
+      <p><strong>Regla:</strong> Es lo contrario de la compuerta OR. La salida es <strong>1</strong> solo si <strong>todas las entradas son 0</strong>. En cualquier otro caso, la salida es <strong>0</strong>.</p>
+      <table>
+        <tr>
+          <th>Entrada A</th>
+          <th>Entrada B</th>
+          <th>Salida</th>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+      </table>
+    </div>
+    <div class="slide">
+      <h2>Compuerta XOR</h2>
+      <p><strong>Regla:</strong> La salida es <strong>1</strong> si las entradas son <strong>diferentes</strong> entre sí. Si las entradas son iguales (ambas 0 o ambas 1), la salida es <strong>0</strong>.</p>
+      <table>
+        <tr>
+          <th>Entrada A</th>
+          <th>Entrada B</th>
+          <th>Salida</th>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>0</td>
+          <td>0</td>
+        </tr>
+        <tr>
+          <td>0</td>
+          <td>1</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>0</td>
+          <td>1</td>
+        </tr>
+        <tr>
+          <td>1</td>
+          <td>1</td>
+          <td>0</td>
+        </tr>
+      </table>
+    </div>
+  </div>
+  <div class="controls">
+    <button onclick="prevSlide()">Anterior</button>
+    <button onclick="nextSlide()">Siguiente</button>
+  </div>
+  <script>
+    const slides = document.getElementById('slides');
+    let currentIndex = 0;
+
+    function nextSlide() {
+      if (currentIndex < slides.children.length - 1) {
+        currentIndex++;
+        updateScroll();
+      }
+    }
+
+    function prevSlide() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        updateScroll();
+      }
+    }
+
+    function updateScroll() {
+      slides.scrollTo({
+        left: slides.children[currentIndex].offsetLeft,
+        behavior: 'smooth'
+      });
+    }
+  </script>
+</body>
+</html>
