@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Juego de Compuertas Lógicas</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f4f4f9;
+      color: #333;
+      text-align: center;
+    }
+    h1 {
+      margin-top: 20px;
+      color: #007BFF;
+    }
+    .game-container {
+      margin: 20px auto;
+      max-width: 600px;
+      background: white;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      padding: 20px;
+    }
+    .question {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+    }
+    .options {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+    .options button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #007BFF;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    .options button:hover {
+      background-color: #0056b3;
+    }
+    .result {
+      font-size: 1.2em;
+      margin-top: 20px;
+    }
+    .result.correct {
+      color: green;
+    }
+    .result.incorrect {
+      color: red;
+    }
+    .timer {
+      font-size: 1.5em;
+      margin-bottom: 20px;
+      color: #007BFF;
+    }
+    .lives-points {
+      font-size: 1.2em;
+      margin-bottom: 20px;
+    }
+    .next-button {
+      margin-top: 20px;
+    }
+    .next-button button {
+      padding: 10px 20px;
+      border: none;
+      background-color: #28a745;
+      color: white;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 1em;
+    }
+    .next-button button:hover {
+      background-color: #218838;
+    }
+    .game-over {
+      font-size: 1.5em;
+      color: red;
+    }
+  </style>
+</head>
+<body>
+  <h1>Juego de Compuertas Lógicas</h1>
+  <div class="game-container">
+    <div class="lives-points" id="livesPoints">Vidas: ❤️❤️❤️ | Puntos: 0</div>
+    <div class="timer" id="timer">Tiempo restante: 15 segundos</div>
+    <div class="question" id="question">¿Cuál es la salida de la compuerta AND si las entradas son A=1 y B=0?</div>
+    <div class="options" id="options">
+      <button onclick="checkAnswer(1)">1</button>
+      <button onclick="checkAnswer(0)">0</button>
+    </div>
+    <div class="result" id="result"></div>
+    <div class="next-button" id="nextButton" style="display: none;">
+      <button onclick="nextQuestion()">Siguiente Pregunta</button>
+    </div>
+    <div class="game-over" id="gameOver" style="display: none;">¡Juego terminado! Puntos totales: <span id="finalScore">0</span></div>
+  </div>
+
+  <script>
+    const questions = [
+      { question: "¿Cuál es la salida de la compuerta AND si las entradas son A=1 y B=0?", answer: 0 },
+      { question: "¿Cuál es la salida de la compuerta OR si las entradas son A=0 y B=1?", answer: 1 },
+      { question: "¿Cuál es la salida de la compuerta NAND si las entradas son A=1 y B=1?", answer: 0 },
+      { question: "¿Cuál es la salida de la compuerta NOR si las entradas son A=0 y B=0?", answer: 1 },
+      { question: "¿Cuál es la salida de la compuerta XOR si las entradas son A=1 y B=1?", answer: 0 },
+      { question: "¿Cuál es la salida de la compuerta AND si las entradas son A=1 y B=1?", answer: 1 },
+      { question: "¿Cuál es la salida de la compuerta OR si las entradas son A=0 y B=0?", answer: 0 },
+      { question: "¿Cuál es la salida de la compuerta NAND si las entradas son A=0 y B=1?", answer: 1 },
+      { question: "¿Cuál es la salida de la compuerta NOR si las entradas son A=1 y B=0?", answer: 0 },
+      { question: "¿Cuál es la salida de la compuerta XOR si las entradas son A=0 y B=1?", answer: 1 },
+      { question: "¿Cuál es la salida de la compuerta AND si las entradas son A=0 y B=0?", answer: 0 },
+      { question: "¿Cuál es la salida de la compuerta OR si las entradas son A=1 y B=1?", answer: 1 },
+      { question: "¿Cuál es la salida de la compuerta NAND si las entradas son A=1 y B=0?", answer: 1 },
+      { question: "¿Cuál es la salida de la compuerta NOR si las entradas son A=1 y B=1?", answer: 0 },
+      { question: "¿Cuál es la salida de la compuerta XOR si las entradas son A=1 y B=0?", answer: 1 }
+    ];
+
+    let currentQuestionIndex = 0;
+    let lives = 3;
+    let points = 0;
+    let timer = 15;
+    let interval;
+
+    function loadQuestion() {
+      const questionElement = document.getElementById('question');
+      const resultElement = document.getElementById('result');
+      const nextButton = document.getElementById('nextButton');
+
+      // Reset UI
+      questionElement.style.display = 'block';
+      resultElement.textContent = '';
+      resultElement.className = 'result';
+      nextButton.style.display = 'none';
+
+      // Load question
+      const currentQuestion = questions[currentQuestionIndex];
+      questionElement.textContent = currentQuestion.question;
+
+      // Start timer
+      timer = 15;
+      clearInterval(interval);
+      interval = setInterval(updateTimer, 1000);
+    }
+
+    function updateTimer() {
+      const timerElement = document.getElementById('timer');
+      timer--;
+      timerElement.textContent = `Tiempo restante: ${timer} segundos`;
+
+      if (timer <= 0) {
+        clearInterval(interval);
+        handleWrongAnswer();
+      }
+    }
+
+    function checkAnswer(selectedAnswer) {
+      clearInterval(interval);
+      const currentQuestion = questions[currentQuestionIndex];
+      const resultElement = document.getElementById('result');
+      const nextButton = document.getElementById('nextButton');
+
+      if (selectedAnswer === currentQuestion.answer) {
+        resultElement.textContent = '¡Correcto!';
+        resultElement.className = 'result correct';
+        points += 10;
+        updateLivesPoints();
+      } else {
+        handleWrongAnswer();
+      }
+
+      // Show next button
+      nextButton.style.display = 'block';
+    }
+
+    function handleWrongAnswer() {
+      const resultElement = document.getElementById('result');
+      lives--;
+      updateLivesPoints();
+
+      if (lives <= 0) {
+        endGame();
+        return;
+      }
+
+      resultElement.textContent = 'Incorrecto. Pierdes una vida.';
+      resultElement.className = 'result incorrect';
+    }
+
+    function updateLivesPoints() {
+      const livesPointsElement = document.getElementById('livesPoints');
+      const hearts = '❤️'.repeat(lives);
+      livesPointsElement.textContent = `Vidas: ${hearts} | Puntos: ${points}`;
+    }
+
+    function nextQuestion() {
+      currentQuestionIndex++;
+      if (currentQuestionIndex < questions.length) {
+        loadQuestion();
+      } else {
+        endGame();
+      }
+    }
+
+    function endGame() {
+      const questionElement = document.getElementById('question');
+      const optionsElement = document.getElementById('options');
+      const resultElement = document.getElementById('result');
+      const nextButton = document.getElementById('nextButton');
+      const gameOverElement = document.getElementById('gameOver');
+      const finalScoreElement = document.getElementById('finalScore');
+
+      questionElement.style.display = 'none';
+      optionsElement.style.display = 'none';
+      resultElement.textContent = '';
+      nextButton.style.display = 'none';
+      gameOverElement.style.display = 'block';
+      finalScoreElement.textContent = points;
+    }
+
+    // Initialize game
+    loadQuestion();
+  </script>
+</body>
+</html>
