@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Asignador de Ejercicios</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background-color: #f4f4f9;
+    }
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+    .card {
+      background-color: #fff;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 15px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    }
+    .card h3 {
+      margin: 0 0 10px;
+      color: #333;
+    }
+    .card p {
+      margin: 0;
+      color: #555;
+    }
+    input[type="number"] {
+      width: 100%;
+      padding: 8px;
+      margin-bottom: 15px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    button {
+      display: block;
+      width: 100%;
+      padding: 10px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    button:hover {
+      background-color: #0056b3;
+    }
+    .tarjetas-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+    .tarjetas-container.three-columns .card {
+      flex: 1 1 calc(33.333% - 20px);
+    }
+    .tarjetas-container.two-columns .card {
+      flex: 1 1 calc(50% - 20px);
+    }
+    .tarjetas-container.one-column .card {
+      flex: 1 1 100%;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Asignador de Ejercicios</h1>
+    <input type="number" id="numEstudiantes" placeholder="Número de estudiantes" min="1">
+    <button onclick="iniciar()">Iniciar</button>
+    <div id="tarjetas" class="tarjetas-container"></div>
+  </div>
+  <script>
+    function iniciar() {
+      const numEstudiantes = document.getElementById('numEstudiantes').value;
+      if (numEstudiantes <= 0 || isNaN(numEstudiantes)) {
+        alert('Por favor, ingresa un número válido de estudiantes.');
+        return;
+      }
+      const estudiantes = [];
+      let contador = 0;
+
+      function pedirNombre() {
+        if (contador < numEstudiantes) {
+          const nombre = prompt(`Ingresa el nombre del estudiante ${contador + 1}:`);
+          if (nombre) {
+            estudiantes.push(nombre);
+            contador++;
+            pedirNombre();
+          } else {
+            alert('Debes ingresar un nombre válido.');
+          }
+        } else {
+          generarTarjetas(estudiantes);
+        }
+      }
+
+      pedirNombre();
+    }
+
+    function generarTarjetas(estudiantes) {
+      const tarjetasContainer = document.getElementById('tarjetas');
+      tarjetasContainer.innerHTML = '';
+
+      // Ajustar el diseño según el número de estudiantes
+      if (estudiantes.length > 10) {
+        tarjetasContainer.className = 'tarjetas-container three-columns';
+      } else if (estudiantes.length > 5) {
+        tarjetasContainer.className = 'tarjetas-container two-columns';
+      } else {
+        tarjetasContainer.className = 'tarjetas-container one-column';
+      }
+
+      estudiantes.forEach(estudiante => {
+        const numeros = [];
+        while (numeros.length < 4) {
+          const numero = Math.floor(Math.random() * 48) + 1;
+          if (!numeros.includes(numero)) {
+            numeros.push(numero);
+          }
+        }
+        const tarjeta = document.createElement('div');
+        tarjeta.className = 'card';
+        tarjeta.innerHTML = `
+          <h3>${estudiante}</h3>
+          <p>Ejercicios: ${numeros.join(', ')}</p>
+        `;
+        tarjetasContainer.appendChild(tarjeta);
+      });
+    }
+  </script>
+</body>
+</html>
