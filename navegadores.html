@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Timeline de Navegadores Web</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+    h1 {
+      text-align: center;
+      color: #333;
+      width: 100%;
+    }
+    #timer {
+      font-size: 24px;
+      margin-bottom: 20px;
+      color: #e74c3c;
+      text-align: center;
+      width: 100%;
+    }
+    #container {
+      display: flex;
+      justify-content: space-between;
+      gap: 20px;
+      width: 100%;
+      max-width: 1200px;
+    }
+    #timeline-columns {
+      width: 45%;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+    }
+    .year-box {
+      width: 48%; /* Dos columnas */
+      height: 80px;
+      border: 2px solid #3498db;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      background-color: #ecf0f1;
+      font-weight: bold;
+      color: #333;
+      cursor: pointer;
+      position: relative;
+    }
+    .event-box {
+      width: 100%;
+      padding: 10px;
+      border: 2px solid #2ecc71;
+      border-radius: 10px;
+      background-color: #ffffff;
+      margin-bottom: 10px;
+      cursor: grab;
+      font-size: 14px;
+      text-align: left;
+    }
+    .event-box.dragging {
+      opacity: 0.5;
+    }
+    #events-column {
+      width: 45%;
+    }
+    #controls {
+      margin-top: 20px;
+      text-align: center;
+      width: 100%;
+    }
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+      text-align: center;
+      width: 100%;
+    }
+    button {
+      padding: 10px 20px;
+      font-size: 16px;
+      background-color: #3498db;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    button:disabled {
+      background-color: #bdc3c7;
+      cursor: not-allowed;
+    }
+    .correct {
+      border: 2px solid green !important;
+      background-color: #d4edda !important;
+    }
+    .incorrect {
+      border: 2px solid red !important;
+      background-color: #f8d7da !important;
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+    <h1>Timeline de la Historia de los Navegadores Web</h1>
+    <div id="timer">Tiempo restante: 3:00</div>
+    <div id="container">
+      <div id="timeline-columns">
+        <div class="year-box" data-year="1990"><span>1990</span></div>
+        <div class="year-box" data-year="1993"><span>1993</span></div>
+        <div class="year-box" data-year="1994"><span>1994</span></div>
+        <div class="year-box" data-year="1995"><span>1995</span></div>
+        <div class="year-box" data-year="2003"><span>2003</span></div>
+        <div class="year-box" data-year="2004"><span>2004</span></div>
+        <div class="year-box" data-year="2008"><span>2008</span></div>
+        <div class="year-box" data-year="2015"><span>2015</span></div>
+        <div class="year-box" data-year="2020"><span>2020</span></div>
+      </div>
+      <div id="events-column">
+        <div class="event-box" draggable="true" data-year="1990">WorldWideWeb (Nexus) - Primer navegador web</div>
+        <div class="event-box" draggable="true" data-year="1993">Mosaic - Popularizó la web</div>
+        <div class="event-box" draggable="true" data-year="1994">Netscape Navigator - Competidor dominante</div>
+        <div class="event-box" draggable="true" data-year="1995">Internet Explorer - Integrado en Windows</div>
+        <div class="event-box" draggable="true" data-year="2003">Safari - Navegador de Apple</div>
+        <div class="event-box" draggable="true" data-year="2004">Firefox - Alternativa abierta</div>
+        <div class="event-box" draggable="true" data-year="2008">Google Chrome - Rápido y minimalista</div>
+        <div class="event-box" draggable="true" data-year="2015">Microsoft Edge - Sucesor de IE</div>
+        <div class="event-box" draggable="true" data-year="2020">Brave - Privacidad y velocidad</div>
+      </div>
+    </div>
+    <div id="controls">
+      <button id="finish-btn">Finalizar</button>
+    </div>
+    <div id="result"></div>
+  </div>
+
+  <script>
+    const timerElement = document.getElementById('timer');
+    const yearBoxes = document.querySelectorAll('.year-box');
+    const eventBoxes = document.querySelectorAll('.event-box');
+    const finishButton = document.getElementById('finish-btn');
+    const resultDiv = document.getElementById('result');
+
+    let timeLeft = 180; // 3 minutos en segundos
+    let interval;
+
+    // Iniciar el temporizador
+    function startTimer() {
+      interval = setInterval(() => {
+        timeLeft--;
+        const minutes = Math.floor(timeLeft / 60);
+        const seconds = timeLeft % 60;
+        timerElement.textContent = `Tiempo restante: ${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+        if (timeLeft <= 0) {
+          clearInterval(interval);
+          finishGame();
+        }
+      }, 1000);
+    }
+
+    // Manejar el arrastre de eventos
+    eventBoxes.forEach(eventBox => {
+      eventBox.addEventListener('dragstart', () => {
+        eventBox.classList.add('dragging');
+      });
+
+      eventBox.addEventListener('dragend', () => {
+        eventBox.classList.remove('dragging');
+      });
+    });
+
+    yearBoxes.forEach(yearBox => {
+      yearBox.addEventListener('dragover', e => {
+        e.preventDefault(); // Permite que el elemento sea soltado aquí
+      });
+
+      yearBox.addEventListener('drop', e => {
+        e.preventDefault();
+        const draggingEvent = document.querySelector('.dragging');
+        if (!yearBox.querySelector('.event-box')) {
+          yearBox.appendChild(draggingEvent);
+        }
+      });
+    });
+
+    // Finalizar el juego
+    function finishGame() {
+      clearInterval(interval);
+      finishButton.disabled = true;
+
+      let correctAnswers = 0;
+      let incorrectAnswers = 0;
+
+      yearBoxes.forEach(yearBox => {
+        const eventBox = yearBox.querySelector('.event-box');
+        if (eventBox) {
+          if (eventBox.getAttribute('data-year') === yearBox.getAttribute('data-year')) {
+            eventBox.classList.add('correct');
+            correctAnswers++;
+          } else {
+            eventBox.classList.add('incorrect');
+            incorrectAnswers++;
+          }
+        }
+      });
+
+      const totalEvents = eventBoxes.length;
+      const percentage = ((correctAnswers / totalEvents) * 100).toFixed(2);
+      resultDiv.innerHTML = `
+        <p><strong>Resultados:</strong></p>
+        <p>Aciertos: ${correctAnswers}/${totalEvents}</p>
+        <p>Errores: ${incorrectAnswers}/${totalEvents}</p>
+        <p>Porcentaje de acierto: ${percentage}%</p>
+      `;
+    }
+
+    // Evento del botón Finalizar
+    finishButton.addEventListener('click', finishGame);
+
+    // Iniciar el juego
+    startTimer();
+  </script>
+</body>
+</html>
