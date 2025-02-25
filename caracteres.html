@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Juego de Caracteres Especiales</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #282c34;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .game-container {
+            text-align: center;
+            background: #3a3f4b;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 0 20px rgba(0,0,0,0.5);
+        }
+        #character {
+            font-size: 4em;
+            margin: 20px;
+            font-weight: bold;
+        }
+        #input {
+            padding: 10px;
+            font-size: 1.2em;
+            width: 200px;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        #timer, #score {
+            font-size: 1.5em;
+            margin: 10px;
+        }
+        #game-over {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+        #restart-btn {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            margin-top: 20px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="timer">Tiempo: 10</div>
+        <div id="score">Puntuación: 0</div>
+        <div id="character">@</div>
+        <input type="text" id="input" maxlength="1">
+    </div>
+
+    <div id="game-over">
+        <h1>¡Juego Terminado!</h1>
+        <p>Puntuación Final: <span id="final-score">0</span></p>
+        <button id="restart-btn">Volver a Jugar</button>
+    </div>
+
+    <script>
+        const characters = [".", ":", ",", ";", "{", "[", "}", "]", "+", "*", "~", "¿", "'", "|", "!", "\"", "#", "$", "%", "&", "/", "(", ")", "=", "¬"];
+        let currentChar = "";
+        let score = 0;
+        let timeLeft = 10;
+        let timerInterval;
+
+        const characterDisplay = document.getElementById('character');
+        const inputField = document.getElementById('input');
+        const timerDisplay = document.getElementById('timer');
+        const scoreDisplay = document.getElementById('score');
+        const gameOverScreen = document.getElementById('game-over');
+        const finalScoreDisplay = document.getElementById('final-score');
+        const restartBtn = document.getElementById('restart-btn');
+
+        function startGame() {
+            score = 0;
+            timeLeft = 10;
+            scoreDisplay.textContent = `Puntuación: ${score}`;
+            nextCharacter();
+            startTimer();
+            inputField.disabled = false;
+            inputField.focus();
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                timerDisplay.textContent = `Tiempo: ${timeLeft}`;
+                if(timeLeft <= 0) {
+                    endGame();
+                }
+            }, 1000);
+        }
+
+        function endGame() {
+            clearInterval(timerInterval);
+            inputField.disabled = true;
+            gameOverScreen.style.display = 'flex';
+            finalScoreDisplay.textContent = score;
+        }
+
+        function nextCharacter() {
+            currentChar = characters[Math.floor(Math.random() * characters.length)];
+            characterDisplay.textContent = currentChar;
+            inputField.value = '';
+            timeLeft = 10;
+            timerDisplay.textContent = `Tiempo: ${timeLeft}`;
+        }
+
+        inputField.addEventListener('input', () => {
+            if(inputField.value === currentChar) {
+                score++;
+                scoreDisplay.textContent = `Puntuación: ${score}`;
+                nextCharacter();
+            }
+        });
+
+        restartBtn.addEventListener('click', () => {
+            gameOverScreen.style.display = 'none';
+            startGame();
+        });
+
+        startGame();
+    </script>
+</body>
+</html>
