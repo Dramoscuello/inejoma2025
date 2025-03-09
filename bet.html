@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Casa de Apuestas</title>
+  <!-- Fuentes para nombres y títulos -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Rubik+Moonrocks&family=Spectral:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,200;1,300;1,400;1,500;1,600;1,700;1,800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <style>
+    /* Fondo sin patrón, contenido centrado */
+    body {
+      font-family: Arial, sans-serif;
+      background: #f3f3f3;
+      margin: 20px;
+      text-align: center;
+    }
+    .game-title {
+      font-family: 'Rubik Moonrocks', cursive;
+      font-size: 2em;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+    /* Estilo para nombres (concursantes y apostadores) */
+    .name-text {
+      font-family: 'Spectral', 'Rubik Moonrocks', sans-serif;
+      font-size: 12px;
+    }
+    .grid-container {
+      display: grid;
+      grid-gap: 20px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+    .card {
+      border: 1px solid #ccc;
+      padding: 10px;
+      border-radius: 8px;
+      width: 200px;
+      cursor: pointer;
+      background-color: #fff;
+      position: relative;
+      transition: transform 0.3s, box-shadow 0.3s;
+    }
+    .card:hover {
+      transform: scale(1.05);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+    .card.winner {
+      border: 3px solid green;
+    }
+    .avatar {
+      width: 100px;
+      height: 100px;
+      object-fit: cover;
+      border-radius: 50%;
+      margin: 0 auto 10px;
+      display: block;
+    }
+    .bettor {
+      background: #f0f0f0;
+      padding: 5px;
+      margin: 5px 0;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    .extra-card {
+      border: 2px dashed #aaa;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: bold;
+      color: #555;
+      height: 250px;
+      cursor: pointer;
+    }
+    /* Botones flotantes en la esquina inferior derecha */
+    #floating-buttons {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      display: flex;
+      gap: 10px;
+      z-index: 1000;
+    }
+    .float-btn {
+      border: none;
+      padding: 10px;
+      border-radius: 50%;
+      color: #fff;
+      cursor: pointer;
+      width: 50px;
+      height: 50px;
+      font-size: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .btn-blue {
+      background-color: blue;
+    }
+    .btn-red {
+      background-color: red;
+    }
+    .btn-blue:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+    /* Animación de partículas */
+    .particle-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      overflow: hidden;
+    }
+    .particle {
+      position: absolute;
+      bottom: 0;
+      width: 8px;
+      height: 8px;
+      background: gold;
+      border-radius: 50%;
+      opacity: 0.8;
+      animation: moveUp 2s linear forwards;
+    }
+    @keyframes moveUp {
+      0% { transform: translateY(0) scale(1); opacity: 0.8; }
+      100% { transform: translateY(-100px) scale(0.5); opacity: 0; }
+    }
+    /* Overlay para tarjetas de perdedores: Dos líneas diagonales que forman una X */
+    .loser-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      z-index: 10;
+    }
+    .loser-overlay::before,
+    .loser-overlay::after {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 141%;
+      height: 5px; /* Grosor de la línea, se puede ajustar */
+      background-color: red;
+      transform-origin: center;
+    }
+    .loser-overlay::before {
+      transform: translate(-50%, -50%) rotate(45deg);
+    }
+    .loser-overlay::after {
+      transform: translate(-50%, -50%) rotate(-45deg);
+    }
+  </style>
+</head>
+<body>
+  <div id="game-container">
+    <!-- Se mostrará el título del juego y las tarjetas de los concursantes -->
+  </div>
+
+  <!-- Botones flotantes -->
+  <div id="floating-buttons">
+    <button id="summary-btn" class="float-btn btn-blue" title="Resumen de Apuestas" disabled>🔍</button>
+    <button id="reset-btn" class="float-btn btn-red" title="Resetear Juego">
+      <span style="color:black;">❌</span>
+    </button>
+  </div>
+
+  <script>
+    // Redondea hacia abajo al múltiplo de 50
+    function roundDown50(amount) {
+      return Math.floor(amount / 50) * 50;
+    }
+
+    // Array de avatares sin repetir
+    const avatars = [
+      "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=Christopher",
+      "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=George",
+      "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=Destiny",
+      "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=Sophia",
+      "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=Valentina",
+      "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=Brian",
+      "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=Amaya",
+      "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=Nolan",
+      "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=Wyatt",
+      "https://api.dicebear.com/9.x/big-ears-neutral/svg?seed=Easton"
+    ];
+
+    let gameData = {
+      gameName: "",
+      competitorBet: 0,
+      finished: false, // Una vez declarado ganador se bloquean acciones
+      houseShare: 0,   // Ganancia final de la casa (incluye redondeos)
+      participants: [] // Cada participante: { name, avatar, bettors: [{name, bet, win}], isWinner, winAmount }
+    };
+
+    function saveGameData() {
+      localStorage.setItem("gameData", JSON.stringify(gameData));
+    }
+    function loadGameData() {
+      const data = localStorage.getItem("gameData");
+      if(data) {
+        gameData = JSON.parse(data);
+      }
+    }
+
+    function renderGame() {
+      const container = document.getElementById("game-container");
+      container.innerHTML = "";
+
+      const titleEl = document.createElement("div");
+      titleEl.className = "game-title";
+      titleEl.textContent = gameData.gameName;
+      container.appendChild(titleEl);
+
+      const numParticipants = gameData.participants.length;
+      const columns = numParticipants < 5 ? numParticipants + 1 : numParticipants;
+      const gridContainer = document.createElement("div");
+      gridContainer.className = "grid-container";
+      gridContainer.style.gridTemplateColumns = `repeat(${columns}, auto)`;
+
+      gameData.participants.forEach((participant, index) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        if(participant.isWinner) {
+          card.classList.add("winner");
+        }
+        card.dataset.index = index;
+
+        // Mostrar avatar asignado
+        const avatarEl = document.createElement("img");
+        avatarEl.className = "avatar";
+        avatarEl.src = participant.avatar;
+        card.appendChild(avatarEl);
+
+        const nameEl = document.createElement("div");
+        nameEl.textContent = participant.name;
+        nameEl.className = "name-text";
+        card.appendChild(nameEl);
+
+        if(participant.isWinner) {
+          const winEl = document.createElement("div");
+          winEl.textContent = "Ganó: $" + participant.winAmount.toFixed(2);
+          card.appendChild(winEl);
+        }
+
+        if(participant.bettors && participant.bettors.length > 0) {
+          const bettorsContainer = document.createElement("div");
+          participant.bettors.forEach((bettor, bIndex) => {
+            const bettorEl = document.createElement("div");
+            bettorEl.textContent = bettor.name + " ($" + bettor.bet.toFixed(2) +
+              (bettor.win ? " -> Gana: $" + bettor.win.toFixed(2) : "") + ")";
+            bettorEl.className = "bettor name-text";
+            if(!gameData.finished) {
+              bettorEl.addEventListener("click", function(e) {
+                e.stopPropagation();
+                Swal.fire({
+                  title: 'Eliminar apostador',
+                  text: '¿Eliminar a ' + bettor.name + '?',
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonText: 'Eliminar'
+                }).then((result) => {
+                  if(result.isConfirmed) {
+                    participant.bettors.splice(bIndex, 1);
+                    saveGameData();
+                    renderGame();
+                  }
+                });
+              });
+            }
+            bettorsContainer.appendChild(bettorEl);
+          });
+          card.appendChild(bettorsContainer);
+        }
+
+        if(!gameData.finished) {
+          card.addEventListener("click", function() {
+            Swal.fire({
+              title: 'Opciones para ' + participant.name,
+              showDenyButton: true,
+              showCancelButton: true,
+              confirmButtonText: 'Ganador',
+              denyButtonText: 'Agregar apostador',
+              cancelButtonText: 'Eliminar'
+            }).then((result) => {
+              if(result.isConfirmed) {
+                declareWinner(index);
+              } else if(result.isDenied) {
+                addBettor(index);
+              } else if(result.dismiss === Swal.DismissReason.cancel) {
+                Swal.fire({
+                  title: '¿Eliminar ' + participant.name + '?',
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonText: 'Sí, eliminar'
+                }).then((res) => {
+                  if(res.isConfirmed) {
+                    gameData.participants.splice(index, 1);
+                    saveGameData();
+                    renderGame();
+                  }
+                });
+              }
+            });
+          });
+        } else {
+          // Si el juego ha finalizado y este participante NO es ganador, cubrir la tarjeta con una X roja en dos líneas diagonales
+          if(!participant.isWinner) {
+            const overlay = document.createElement("div");
+            overlay.className = "loser-overlay";
+            card.appendChild(overlay);
+          }
+        }
+        gridContainer.appendChild(card);
+      });
+
+      if(!gameData.finished && numParticipants < 5) {
+        const extraCard = document.createElement("div");
+        extraCard.className = "card extra-card";
+        extraCard.textContent = "Agregar nuevo concursante";
+        extraCard.addEventListener("click", function() {
+          addParticipant();
+        });
+        gridContainer.appendChild(extraCard);
+      }
+
+      container.appendChild(gridContainer);
+    }
+
+    // Asigna un avatar aleatorio sin repetir
+    function getRandomAvatar() {
+      const used = gameData.participants.map(p => p.avatar);
+      const available = avatars.filter(a => !used.includes(a));
+      if(available.length > 0) {
+        const index = Math.floor(Math.random() * available.length);
+        return available[index];
+      }
+      return avatars[Math.floor(Math.random() * avatars.length)];
+    }
+
+    function addParticipant() {
+      Swal.fire({
+        title: 'Nuevo concursante',
+        input: 'text',
+        inputLabel: 'Nombre del concursante',
+        showCancelButton: true,
+        inputValidator: (value) => {
+          if(!value) return '¡Ingresa un nombre!';
+        }
+      }).then((result) => {
+        if(result.isConfirmed) {
+          const newName = result.value;
+          const newParticipant = {
+            name: newName,
+            avatar: getRandomAvatar(),
+            bettors: [],
+            isWinner: false,
+            winAmount: 0
+          };
+          gameData.participants.push(newParticipant);
+          saveGameData();
+          renderGame();
+        }
+      });
+    }
+
+    function addBettor(participantIndex) {
+      Swal.fire({
+        title: 'Agregar apostador',
+        input: 'text',
+        inputLabel: 'Nombre del apostador',
+        showCancelButton: true,
+        inputValidator: (value) => {
+          if(!value) return 'Ingresa un nombre';
+        }
+      }).then((result) => {
+        if(result.isConfirmed) {
+          const bettorName = result.value;
+          Swal.fire({
+            title: 'Monto a apostar',
+            input: 'number',
+            inputLabel: 'Cantidad',
+            showCancelButton: true,
+            inputValidator: (value) => {
+              if(!value || parseFloat(value) <= 0) return 'Ingresa una cantidad válida';
+            }
+          }).then((res) => {
+            if(res.isConfirmed) {
+              const betAmount = parseFloat(res.value);
+              gameData.participants[participantIndex].bettors.push({
+                name: bettorName,
+                bet: betAmount,
+                win: 0
+              });
+              saveGameData();
+              renderGame();
+            }
+          });
+        }
+      });
+    }
+
+    /* Distribución:
+         - Si hay apostadores: 
+             • Casa: 20% del totalPool (más excedentes de redondeo)
+             • Ganador: 50% del totalPool (redondeado hacia abajo)
+             • Apostadores: 30% del totalPool, distribuido proporcionalmente (redondeado)
+         - Si no hay apostadores:
+             • Ganador: 60% (redondeado)
+             • Casa: 40%
+    */
+    function declareWinner(winnerIndex) {
+      gameData.finished = true;
+      gameData.participants.forEach(p => {
+        p.isWinner = false;
+        p.winAmount = 0;
+        if(p.bettors) {
+          p.bettors.forEach(b => b.win = 0);
+        }
+      });
+      gameData.participants[winnerIndex].isWinner = true;
+
+      const competitorCount = gameData.participants.length;
+      const competitorTotal = competitorCount * gameData.competitorBet;
+      let totalBettor = 0;
+      gameData.participants.forEach(p => {
+        if(p.bettors) {
+          p.bettors.forEach(b => { totalBettor += b.bet; });
+        }
+      });
+      const totalPool = competitorTotal + totalBettor;
+
+      const winningBettors = gameData.participants[winnerIndex].bettors;
+      const totalBetsWinner = winningBettors.reduce((sum, b) => sum + b.bet, 0);
+      let winnerShare, bettorsShareTotal = 0, houseShare;
+      
+      if(totalBetsWinner > 0) {
+        winnerShare = roundDown50(0.50 * totalPool);
+        winningBettors.forEach(bettor => {
+          const shareOriginal = (bettor.bet / totalBetsWinner) * (0.30 * totalPool);
+          const shareRounded = roundDown50(shareOriginal);
+          bettor.win = shareRounded;
+          bettorsShareTotal += shareRounded;
+        });
+        houseShare = totalPool - (winnerShare + bettorsShareTotal);
+      } else {
+        winnerShare = roundDown50(0.60 * totalPool);
+        houseShare = totalPool - winnerShare;
+      }
+
+      gameData.participants[winnerIndex].winAmount = winnerShare;
+      gameData.houseShare = houseShare;
+
+      // Habilitar el botón de resumen
+      document.getElementById("summary-btn").disabled = false;
+      saveGameData();
+      renderGame();
+
+      // Ejecutar animación de partículas en la tarjeta del ganador
+      const winnerCard = document.querySelector(`.card[data-index="${winnerIndex}"]`);
+      if(winnerCard) {
+        animateParticles(winnerCard);
+      }
+    }
+
+    // Animación de partículas en la tarjeta del ganador
+    function animateParticles(card) {
+      const particleContainer = document.createElement("div");
+      particleContainer.className = "particle-container";
+      card.appendChild(particleContainer);
+      for (let i = 0; i < 20; i++) {
+        const particle = document.createElement("div");
+        particle.className = "particle";
+        particle.style.left = Math.random() * 100 + "%";
+        particle.style.animationDelay = Math.random() * 1 + "s";
+        particleContainer.appendChild(particle);
+      }
+      setTimeout(() => {
+        if(particleContainer.parentNode) {
+          particleContainer.parentNode.removeChild(particleContainer);
+        }
+      }, 3000);
+    }
+
+    function showSummary() {
+      const competitorCount = gameData.participants.length;
+      const competitorTotal = competitorCount * gameData.competitorBet;
+      let totalBettor = 0;
+      gameData.participants.forEach(p => {
+        if(p.bettors) {
+          p.bettors.forEach(b => { totalBettor += b.bet; });
+        }
+      });
+      const totalPool = competitorTotal + totalBettor;
+      let winnersGain = 0;
+      const winnerParticipant = gameData.participants.find(p => p.isWinner);
+      if(winnerParticipant) {
+        if(winnerParticipant.bettors.length > 0) {
+          let bettorsTotal = winnerParticipant.bettors.reduce((sum, b) => sum + b.win, 0);
+          winnersGain = winnerParticipant.winAmount + bettorsTotal;
+        } else {
+          winnersGain = winnerParticipant.winAmount;
+        }
+      }
+      Swal.fire({
+        title: 'Resumen de Apuestas',
+        html: 'Total apostado: $' + totalPool.toFixed(2) + '<br>' +
+              'Ganadores se llevan: $' + winnersGain.toFixed(2) + '<br>' +
+              'Casa retiene: $' + gameData.houseShare.toFixed(2)
+      });
+    }
+
+    function resetGame() {
+      Swal.fire({
+        title: '¿Estás seguro?',
+        text: "Se eliminará toda la información del juego",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Sí, eliminar'
+      }).then((result) => {
+        if(result.isConfirmed) {
+          localStorage.clear();
+          location.reload();
+        }
+      });
+    }
+
+    async function initializeGame() {
+      const { value: gameName } = await Swal.fire({
+        title: 'Nombre del juego del día',
+        input: 'text',
+        inputLabel: 'Ingresa el nombre del juego',
+        inputValidator: (value) => {
+          if(!value) return 'Ingresa un nombre';
+        }
+      });
+      gameData.gameName = gameName;
+      
+      const { value: numParticipants } = await Swal.fire({
+        title: 'Número de participantes',
+        input: 'number',
+        inputLabel: 'Ingresa un número entre 2 y 5',
+        inputAttributes: { min: 2, max: 5 },
+        inputValidator: (value) => {
+          if(!value || value < 2 || value > 5) return 'Ingresa un número válido (2-5)';
+        }
+      });
+      const count = parseInt(numParticipants);
+      
+      const { value: betAmount } = await Swal.fire({
+        title: 'Monto a apostar por cada concursante',
+        input: 'number',
+        inputLabel: 'Cantidad',
+        inputValidator: (value) => {
+          if(!value || parseFloat(value) <= 0) return 'Ingresa una cantidad válida';
+        }
+      });
+      gameData.competitorBet = parseFloat(betAmount);
+      
+      for(let i = 0; i < count; i++){
+        const { value: participantName } = await Swal.fire({
+          title: 'Nombre del concursante ' + (i+1),
+          input: 'text',
+          inputLabel: 'Ingresa el nombre',
+          inputValidator: (value) => {
+            if(!value) return 'Ingresa un nombre';
+          }
+        });
+        gameData.participants.push({
+          name: participantName,
+          avatar: getRandomAvatar(),
+          bettors: [],
+          isWinner: false,
+          winAmount: 0
+        });
+      }
+      saveGameData();
+      renderGame();
+    }
+
+    document.getElementById("summary-btn").addEventListener("click", showSummary);
+    document.getElementById("reset-btn").addEventListener("click", resetGame);
+
+    window.onload = function() {
+      loadGameData();
+      if(!gameData.gameName) {
+        initializeGame();
+      } else {
+        renderGame();
+      }
+    }
+  </script>
+</body>
+</html>
