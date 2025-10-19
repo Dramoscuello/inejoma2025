@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cruzando el Laberinto - Algoritmos</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 15px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitulo {
+            text-align: center;
+            color: #666;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .game-board {
+            background: #f0f0f0;
+            border: 3px solid #333;
+            border-radius: 10px;
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1;
+            max-width: 400px;
+            margin: 0 auto 30px;
+            overflow: hidden;
+        }
+
+        .celda {
+            position: absolute;
+            width: 12.5%;
+            height: 12.5%;
+            border: 1px solid #ddd;
+        }
+
+        .pared {
+            background-color: #333;
+        }
+
+        .camino {
+            background-color: #fff;
+        }
+
+        .inicio {
+            background-color: #90EE90;
+        }
+
+        .objetivo {
+            background-color: #FFD700;
+        }
+
+        .personaje {
+            position: absolute;
+            width: 12.5%;
+            height: 12.5%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 28px;
+            z-index: 10;
+            transition: all 0.3s ease;
+        }
+
+        .mensaje {
+            text-align: center;
+            min-height: 40px;
+            font-size: 16px;
+            color: #333;
+            margin-bottom: 20px;
+            padding: 10px;
+            border-radius: 8px;
+        }
+
+        .mensaje.exito {
+            background-color: #90EE90;
+            color: #2d5016;
+            font-weight: bold;
+        }
+
+        .mensaje.error {
+            background-color: #FFB6C6;
+            color: #8b0000;
+            font-weight: bold;
+        }
+
+        .controles {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 12px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+        }
+
+        .btn-arriba {
+            grid-column: 1 / 3;
+            background-color: #4CAF50;
+            color: white;
+        }
+
+        .btn-izq {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .btn-der {
+            background-color: #2196F3;
+            color: white;
+        }
+
+        .btn-abajo {
+            grid-column: 1 / 3;
+            background-color: #FF9800;
+            color: white;
+        }
+
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .info {
+            background-color: #E8F4F8;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            color: #333;
+            font-size: 14px;
+            margin-top: 20px;
+        }
+
+        .reiniciar {
+            width: 100%;
+            background-color: #9C27B0;
+            color: white;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Cruzando el Laberinto</h1>
+        <p class="subtitulo">Ayuda al personaje a llegar a la meta usando las instrucciones</p>
+        
+        <div class="mensaje" id="mensaje"></div>
+        
+        <div class="game-board" id="tablero">
+            <div class="personaje" id="personaje">🚀</div>
+            <div class="personaje" id="enemigo">👿</div>
+        </div>
+
+        <div class="controles">
+            <button class="btn-arriba" onclick="mover('arriba')">⬆️ AVANZA</button>
+            <button class="btn-izq" onclick="mover('izq')">⬅️ IZQUIERDA</button>
+            <button class="btn-der" onclick="mover('der')">➡️ DERECHA</button>
+            <button class="btn-abajo" onclick="mover('abajo')">⬇️ RETROCEDE</button>
+        </div>
+
+        <button class="reiniciar" onclick="iniciarJuego()">🔄 REINICIAR</button>
+
+        <div class="info">
+            ✨ Tip: Secuencias de instrucciones forman un <strong>algoritmo</strong>. ¡Encuentra la secuencia correcta para llegar a la meta!
+        </div>
+    </div>
+
+    <script>
+        const FILAS = 8;
+        const COLS = 8;
+        
+        let posX = 0;
+        let posY = 0;
+        let mapaActual = [];
+        let objetivoActual = {};
+        let enemigoX = 0;
+        let enemigoY = 0;
+        let juegoActivo = true;
+        let salio = false;
+        let movimientosDelJugador = 0;
+        
+        const laberintos = [
+            {
+                mapa: [
+                    [0, 0, 1, 1, 1, 1, 1, 1],
+                    [0, 0, 0, 0, 1, 0, 0, 1],
+                    [1, 1, 1, 0, 1, 0, 1, 1],
+                    [1, 0, 0, 0, 0, 0, 0, 1],
+                    [1, 0, 1, 1, 1, 1, 0, 1],
+                    [1, 0, 0, 0, 0, 0, 0, 1],
+                    [1, 1, 1, 0, 1, 1, 0, 1],
+                    [1, 1, 1, 0, 0, 0, 0, 0]
+                ],
+                objetivo: { x: 7, y: 7 }
+            },
+            {
+                mapa: [
+                    [0, 0, 1, 1, 1, 1, 1, 1],
+                    [0, 0, 1, 0, 0, 0, 1, 1],
+                    [1, 0, 1, 0, 1, 0, 0, 1],
+                    [1, 0, 0, 0, 1, 1, 0, 1],
+                    [1, 1, 1, 0, 0, 0, 0, 1],
+                    [1, 0, 0, 0, 1, 1, 0, 1],
+                    [1, 0, 1, 0, 0, 0, 0, 1],
+                    [1, 0, 0, 0, 1, 1, 0, 0]
+                ],
+                objetivo: { x: 7, y: 7 }
+            },
+            {
+                mapa: [
+                    [0, 0, 0, 0, 1, 1, 1, 1],
+                    [1, 1, 1, 0, 1, 1, 0, 1],
+                    [1, 0, 0, 0, 0, 1, 0, 1],
+                    [1, 0, 1, 1, 1, 1, 0, 1],
+                    [1, 0, 0, 0, 0, 0, 0, 1],
+                    [1, 1, 0, 1, 1, 1, 1, 1],
+                    [1, 0, 0, 0, 0, 0, 0, 0],
+                    [1, 1, 1, 1, 1, 1, 1, 0]
+                ],
+                objetivo: { x: 7, y: 6 }
+            },
+            {
+                mapa: [
+                    [0, 0, 0, 0, 1, 1, 1, 1],
+                    [1, 1, 1, 0, 1, 0, 0, 1],
+                    [1, 0, 0, 0, 1, 0, 1, 1],
+                    [1, 0, 1, 0, 0, 0, 0, 1],
+                    [1, 0, 0, 0, 1, 1, 0, 1],
+                    [1, 1, 1, 0, 1, 0, 0, 1],
+                    [1, 0, 0, 0, 1, 0, 1, 1],
+                    [1, 0, 1, 0, 0, 0, 0, 0]
+                ],
+                objetivo: { x: 7, y: 7 }
+            },
+            {
+                mapa: [
+                    [0, 0, 0, 1, 1, 1, 1, 1],
+                    [1, 1, 0, 1, 0, 0, 0, 1],
+                    [1, 0, 0, 0, 0, 1, 0, 1],
+                    [1, 0, 1, 1, 0, 1, 0, 1],
+                    [1, 1, 1, 0, 0, 0, 0, 1],
+                    [1, 0, 0, 0, 1, 1, 0, 1],
+                    [1, 0, 1, 1, 1, 1, 1, 1],
+                    [1, 0, 0, 0, 0, 0, 0, 0]
+                ],
+                objetivo: { x: 7, y: 7 }
+            }
+        ];
+
+        function iniciarJuego() {
+            posX = 0;
+            posY = 0;
+            enemigoX = 0;
+            enemigoY = 0;
+            juegoActivo = true;
+            salio = false;
+            movimientosDelJugador = 0;
+            
+            // Seleccionar un laberinto aleatorio
+            const laberintoAleatorio = laberintos[Math.floor(Math.random() * laberintos.length)];
+            mapaActual = laberintoAleatorio.mapa;
+            objetivoActual = laberintoAleatorio.objetivo;
+            
+            document.getElementById('mensaje').textContent = '';
+            document.getElementById('mensaje').className = 'mensaje';
+            crearTablero();
+            actualizarPosicion();
+            actualizarEnemigo();
+        }
+
+        function crearTablero() {
+            const tablero = document.getElementById('tablero');
+            const celdas = tablero.querySelectorAll('.celda');
+            celdas.forEach(celda => celda.remove());
+
+            for (let fila = 0; fila < FILAS; fila++) {
+                for (let col = 0; col < COLS; col++) {
+                    const celda = document.createElement('div');
+                    celda.className = 'celda';
+                    
+                    if (mapaActual[fila][col] === 1) {
+                        celda.classList.add('pared');
+                    } else {
+                        celda.classList.add('camino');
+                    }
+
+                    if (fila === 0 && col === 0) {
+                        celda.classList.add('inicio');
+                    }
+
+                    if (fila === objetivoActual.y && col === objetivoActual.x) {
+                        celda.classList.add('objetivo');
+                    }
+
+                    celda.style.left = (col * 12.5) + '%';
+                    celda.style.top = (fila * 12.5) + '%';
+                    
+                    tablero.appendChild(celda);
+                }
+            }
+        }
+
+        function actualizarPosicion() {
+            const personaje = document.getElementById('personaje');
+            personaje.style.left = (posX * 12.5) + '%';
+            personaje.style.top = (posY * 12.5) + '%';
+        }
+
+        function actualizarEnemigo() {
+            const enemigo = document.getElementById('enemigo');
+            enemigo.style.left = (enemigoX * 12.5) + '%';
+            enemigo.style.top = (enemigoY * 12.5) + '%';
+        }
+
+        function perseguirJugador() {
+            if (!salio || !juegoActivo) return;
+
+            let distanciaSuma = Math.abs(posX - enemigoX) + Math.abs(posY - enemigoY);
+            
+            let mejorX = enemigoX;
+            let mejorY = enemigoY;
+            let mejorDistancia = distanciaSuma;
+
+            // Intentar movimiento arriba
+            if (enemigoY - 1 >= 0 && mapaActual[enemigoY - 1][enemigoX] === 0) {
+                let dist = Math.abs(posX - enemigoX) + Math.abs(posY - (enemigoY - 1));
+                if (dist < mejorDistancia) {
+                    mejorDistancia = dist;
+                    mejorX = enemigoX;
+                    mejorY = enemigoY - 1;
+                }
+            }
+
+            // Intentar movimiento abajo
+            if (enemigoY + 1 < FILAS && mapaActual[enemigoY + 1][enemigoX] === 0) {
+                let dist = Math.abs(posX - enemigoX) + Math.abs(posY - (enemigoY + 1));
+                if (dist < mejorDistancia) {
+                    mejorDistancia = dist;
+                    mejorX = enemigoX;
+                    mejorY = enemigoY + 1;
+                }
+            }
+
+            // Intentar movimiento izquierda
+            if (enemigoX - 1 >= 0 && mapaActual[enemigoY][enemigoX - 1] === 0) {
+                let dist = Math.abs(posX - (enemigoX - 1)) + Math.abs(posY - enemigoY);
+                if (dist < mejorDistancia) {
+                    mejorDistancia = dist;
+                    mejorX = enemigoX - 1;
+                    mejorY = enemigoY;
+                }
+            }
+
+            // Intentar movimiento derecha
+            if (enemigoX + 1 < COLS && mapaActual[enemigoY][enemigoX + 1] === 0) {
+                let dist = Math.abs(posX - (enemigoX + 1)) + Math.abs(posY - enemigoY);
+                if (dist < mejorDistancia) {
+                    mejorDistancia = dist;
+                    mejorX = enemigoX + 1;
+                    mejorY = enemigoY;
+                }
+            }
+
+            enemigoX = mejorX;
+            enemigoY = mejorY;
+            actualizarEnemigo();
+
+            // Verificar si el enemigo alcanzó al jugador
+            if (enemigoX === posX && enemigoY === posY) {
+                juegoActivo = false;
+                mostrarMensaje('💀 ¡GAME OVER! El enemigo te alcanzó. Intenta de nuevo.', 'error');
+            }
+        }
+
+        function mover(direccion) {
+            if (!juegoActivo) return;
+
+            let nuevoX = posX;
+            let nuevoY = posY;
+
+            if (direccion === 'arriba') {
+                nuevoY--;
+            } else if (direccion === 'abajo') {
+                nuevoY++;
+            } else if (direccion === 'izq') {
+                nuevoX--;
+            } else if (direccion === 'der') {
+                nuevoX++;
+            } else {
+                return;
+            }
+
+            // Verificar si la nueva posición está dentro del tablero
+            if (nuevoX >= 0 && nuevoX < COLS && nuevoY >= 0 && nuevoY < FILAS) {
+                // Verificar si es un camino (0 = camino, 1 = pared)
+                if (mapaActual[nuevoY][nuevoX] === 0) {
+                    posX = nuevoX;
+                    posY = nuevoY;
+                    
+                    // Marcar que salió de la posición inicial
+                    if (posX !== 0 || posY !== 0) {
+                        salio = true;
+                    }
+                    
+                    movimientosDelJugador++;
+                    actualizarPosicion();
+
+                    // El enemigo persigue solo después del tercer movimiento del jugador
+                    if (movimientosDelJugador > 2) {
+                        setTimeout(perseguirJugador, 300);
+                    }
+
+                    // Verificar si llegó al objetivo
+                    if (posX === objetivoActual.x && posY === objetivoActual.y) {
+                        juegoActivo = false;
+                        mostrarMensaje('¡🎉 ¡FELICIDADES! ¡Llegaste a la meta! Tu algoritmo fue perfecto.', 'exito');
+                    }
+                } else {
+                    mostrarMensaje('⚠️ ¡Golpeaste una pared! Esa instrucción no es válida.', 'error');
+                }
+            } else {
+                mostrarMensaje('⚠️ ¡Saliste del tablero! Debes quedarte dentro.', 'error');
+            }
+        }
+
+        function mostrarMensaje(texto, tipo) {
+            const mensaje = document.getElementById('mensaje');
+            mensaje.textContent = texto;
+            mensaje.className = 'mensaje ' + tipo;
+        }
+
+        iniciarJuego();
+    </script>
+</body>
+</html>
