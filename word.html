@@ -1,0 +1,325 @@
+<!doctype html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Caza de herramientas — Explorando Word</title>
+    <style>
+        :root{
+            --bg:#f3f7fb;
+            --card:#ffffff;
+            --accent:#1f6feb;
+            --good:#1aa260;
+            --danger:#e02424;
+            --text:#1f2937;
+            --muted:#6b7280;
+        }
+        *{box-sizing:border-box;font-family:Inter, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
+        body{margin:0;background:linear-gradient(180deg,var(--bg),#e9f0ff 100%);color:var(--text);display:flex;align-items:center;justify-content:center;min-height:100vh;padding:20px;}
+        .game{
+            width:980px;max-width:100%;background:linear-gradient(180deg,#fff,#fbfdff);border-radius:12px;box-shadow:0 8px 30px rgba(20,40,80,0.08);overflow:hidden;
+        }
+        header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;border-bottom:1px solid #eef2fb;}
+        h1{font-size:18px;margin:0}
+        .controls{display:flex;gap:10px;align-items:center}
+        .btn{background:var(--accent);color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer;font-weight:600}
+        .btn.secondary{background:#eef3ff;color:var(--accent);border:1px solid #d7e6ff}
+        .status{display:flex;gap:14px;align-items:center;font-size:14px;color:var(--muted)}
+        .hearts{display:flex;gap:6px}
+        .heart{width:18px;height:18px;display:inline-block}
+        main{display:flex;gap:20px;padding:18px;}
+        .left{flex:1}
+        .right{width:340px;max-width:40%;min-width:260px}
+        .board{
+            height:420px;border:2px dashed #e6eefc;border-radius:10px;background:linear-gradient(180deg,#fbfdff,#f7fbff);position:relative;overflow:hidden;padding:12px;
+        }
+        .target{margin-bottom:8px;font-weight:700;color:var(--accent)}
+        .card{
+            position:absolute;min-width:120px;max-width:200px;padding:10px 12px;border-radius:8px;background:var(--card);box-shadow:0 6px 18px rgba(10,30,80,0.06);cursor:pointer;user-select:none;
+            display:flex;gap:8px;align-items:center;border:1px solid rgba(20,40,80,0.04);
+            transition:transform 0.08s ease;
+        }
+        .card:active{transform:scale(.98)}
+        .icon{width:36px;height:36px;border-radius:6px;background:#f0f6ff;display:flex;align-items:center;justify-content:center;font-weight:700;color:var(--accent);font-size:14px}
+        .label{font-weight:600}
+        .muted{font-size:12px;color:var(--muted)}
+        .panel{background:#fff;padding:12px;border-radius:8px;border:1px solid #eef2fb;margin-bottom:12px}
+        .small{font-size:13px;color:var(--muted)}
+        footer{padding:12px 18px;border-top:1px solid #eef2fb;background:linear-gradient(180deg,#fff, #fbfcff);display:flex;align-items:center;justify-content:space-between}
+        .meter{height:8px;background:#eef4ff;border-radius:6px;overflow:hidden}
+        .meter > i{display:block;height:100%;background:linear-gradient(90deg,var(--good),#0ea5a0);width:0%}
+        .center{display:flex;flex-direction:column;align-items:center;justify-content:center}
+        @media (max-width:860px){
+            .right{display:none}
+            main{padding:12px}
+        }
+    </style>
+</head>
+<body>
+<div class="game" role="application" aria-label="Juego Caza de herramientas">
+    <header>
+        <h1>Caza de herramientas — Explorando Word</h1>
+        <div style="display:flex;gap:12px;align-items:center">
+            <div class="status" aria-live="polite">
+                <div class="score" title="Puntos"><strong>Puntos:</strong> <span id="score">0</span></div>
+                <div class="hearts" aria-hidden="false" title="Vidas"><strong style="font-weight:700;margin-right:6px">Vidas:</strong><span id="livesContainer"></span></div>
+            </div>
+        </div>
+    </header>
+
+    <main>
+        <div class="left">
+            <div class="panel">
+                <div class="target" id="levelTarget">Objetivo: —</div>
+                <div class="small">Haz clic solo en las tarjetas que pertenezcan a la categoría objetivo. Cada acierto: +10 puntos. Cada error: -1 vida.</div>
+            </div>
+
+            <div class="board" id="board" aria-label="Tablero de juego">
+                <!-- tarjetas dinámicas aparecerán aquí -->
+            </div>
+        </div>
+
+        <aside class="right">
+            <div class="panel">
+                <div style="display:flex;justify-content:space-between;align-items:center">
+                    <div><strong>Nivel:</strong> <span id="level">1</span></div>
+                    <div><strong>Velocidad:</strong> <span id="speedLabel">Baja</span></div>
+                </div>
+                <div style="height:10px"></div>
+                <div class="meter" aria-hidden="true"><i id="meterFill" style="width:0%"></i></div>
+            </div>
+
+            <div class="panel center">
+                <button class="btn" id="startBtn">Iniciar juego</button>
+                <button class="btn secondary" id="pauseBtn" style="margin-top:8px">Pausar</button>
+            </div>
+
+            <div class="panel">
+                <strong>Instrucciones rápidas</strong>
+                <ul style="padding-left:18px;margin:8px 0;color:var(--muted);font-size:13px">
+                    <li>Lee el objetivo del nivel arriba del tablero.</li>
+                    <li>Haz clic solo en las tarjetas correctas.</li>
+                    <li>Cuando pierdas todas las vidas, presiona <em>Iniciar juego</em> para reiniciar.</li>
+                </ul>
+            </div>
+        </aside>
+    </main>
+
+    <footer>
+        <div class="small">Diseñado para practicar reconocimiento de menús y funciones de un procesador de texto.</div>
+        <div><strong>Profesor:</strong> <span id="teacherNote" class="muted">Opcional: usar como repaso en clase</span></div>
+    </footer>
+</div>
+
+<script>
+    (() => {
+        // Datos de tarjetas: texto y categoría
+        const cardsData = [
+            { label: "Negrita (B)", cat: "Formato" },
+            { label: "Cursiva (I)", cat: "Formato" },
+            { label: "Tamaño de fuente", cat: "Formato" },
+            { label: "Color de texto", cat: "Formato" },
+
+            { label: "Insertar imagen", cat: "Insertar" },
+            { label: "Insertar tabla", cat: "Insertar" },
+            { label: "Encabezado", cat: "Insertar" },
+            { label: "Pie de página", cat: "Insertar" },
+
+            { label: "Guardar", cat: "Archivo" },
+            { label: "Nuevo documento", cat: "Archivo" },
+            { label: "Abrir", cat: "Archivo" },
+
+            { label: "Ortografía", cat: "Revisión" },
+            { label: "Comentarios", cat: "Revisión" },
+            { label: "Control de cambios", cat: "Revisión" },
+
+            { label: "Regla", cat: "Diseño" },
+            { label: "Márgenes", cat: "Diseño" },
+
+            { label: "Tabla de contenido", cat: "Referencias" },
+            { label: "Citas", cat: "Referencias" },
+
+            // elementos trampa o similares
+            { label: "Buscar en internet", cat: "Otros" },
+            { label: "Ajustes del sistema", cat: "Otros" }
+        ];
+
+        const targets = ["Formato","Insertar","Archivo","Revisión","Diseño","Referencias","Otros"];
+        const board = document.getElementById('board');
+        const scoreEl = document.getElementById('score');
+        const levelEl = document.getElementById('level');
+        const targetEl = document.getElementById('levelTarget');
+        const livesContainer = document.getElementById('livesContainer');
+        const startBtn = document.getElementById('startBtn');
+        const pauseBtn = document.getElementById('pauseBtn');
+        const speedLabel = document.getElementById('speedLabel');
+        const meterFill = document.getElementById('meterFill');
+
+        let score = 0;
+        let lives = 3;
+        let level = 1;
+        let speed = 1; // multiplier
+        let running = false;
+        let spawnIntervalId = null;
+        let moveIntervalId = null;
+        let currentTarget = null;
+
+        function updateLivesDisplay(){
+            livesContainer.innerHTML = '';
+            for(let i=0;i<lives;i++){
+                const s = document.createElement('span');
+                s.className = 'heart';
+                s.innerHTML = '❤️';
+                livesContainer.appendChild(s);
+            }
+            if(lives <= 0){
+                gameOver();
+            }
+        }
+
+        function setTarget(){
+            // seleccionar objetivo aleatorio (puede repetirse)
+            currentTarget = targets[Math.floor(Math.random()*targets.length)];
+            targetEl.textContent = `Objetivo: Haz clic solo en funciones de "${currentTarget}"`;
+        }
+
+        function rand(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+
+        function spawnCard(){
+            // seleccionar aleatoriamente un elemento del dataset
+            const d = cardsData[Math.floor(Math.random()*cardsData.length)];
+            const el = document.createElement('div');
+            el.className = 'card';
+            el.tabIndex = 0;
+            el.setAttribute('role','button');
+            el.dataset.cat = d.cat;
+            el.innerHTML = `<div class="icon">${d.label.split(' ')[0].slice(0,2)}</div><div><div class="label">${d.label}</div><div class="muted">${d.cat}</div></div>`;
+
+            // posición aleatoria en X dentro del tablero
+            const pad = 8;
+            const rect = board.getBoundingClientRect();
+            const width = rand(120,180);
+            el.style.width = width + 'px';
+            const maxLeft = Math.max(0, rect.width - width - pad);
+            el.style.left = rand(pad, Math.floor(maxLeft)) + 'px';
+            el.style.top = '-60px'; // aparece arriba y baja
+
+            // velocidad individual
+            el.dataset.speed = (0.3 + Math.random()*0.6) * speed; // px per tick multiplier
+
+            board.appendChild(el);
+
+            // click handler
+            el.addEventListener('click', () => {
+                if(!running) return;
+                // comprobar categoría
+                if(el.dataset.cat === currentTarget){
+                    score += 10;
+                    scoreEl.textContent = score;
+                    el.remove();
+                    checkLevelUp();
+                    flashMeter();
+                } else {
+                    lives -= 1;
+                    updateLivesDisplay();
+                    el.remove();
+                }
+            });
+            // keyboard accessibility: Enter key
+            el.addEventListener('keydown', (ev) => {
+                if(ev.key === 'Enter') el.click();
+            });
+        }
+
+        function moveCards(){
+            const cards = Array.from(board.querySelectorAll('.card'));
+            cards.forEach(c => {
+                const top = parseFloat(c.style.top || 0);
+                const newTop = top + (1 + parseFloat(c.dataset.speed || 1));
+                c.style.top = newTop + 'px';
+                // si sale por abajo, eliminar sin penalizar
+                if(newTop > board.clientHeight + 40){
+                    c.remove();
+                }
+            });
+        }
+
+        function startGame(){
+            if(running) return;
+            running = true;
+            score = 0;
+            lives = 3;
+            level = 1;
+            speed = 1;
+            scoreEl.textContent = score;
+            levelEl.textContent = level;
+            speedLabel.textContent = 'Baja';
+            meterFill.style.width = '0%';
+            updateLivesDisplay();
+            setTarget();
+
+            // limpiar tablero
+            board.querySelectorAll('.card').forEach(n => n.remove());
+
+            // spawn cada X ms según nivel
+            spawnIntervalId = setInterval(spawnCard, Math.max(700, 1600 - level*120));
+            moveIntervalId = setInterval(moveCards, 16); // ~60fps
+        }
+
+        function pauseGame(){
+            if(!running) return;
+            running = false;
+            clearInterval(spawnIntervalId);
+            clearInterval(moveIntervalId);
+        }
+
+        function gameOver(){
+            pauseGame();
+            alert(`Juego terminado.\nPuntos: ${score}`);
+        }
+
+        function checkLevelUp(){
+            const newLevel = Math.floor(score / 50) + 1;
+            if(newLevel > level){
+                level = newLevel;
+                levelEl.textContent = level;
+                // aumentar velocidad y dificultad
+                speed = 1 + (level-1)*0.18;
+                speedLabel.textContent = (speed < 1.6) ? 'Baja' : (speed < 2.2 ? 'Media' : 'Alta');
+                // ajustar meter
+                meterFill.style.width = Math.min(100, (score/200)*100) + '%';
+                // cambiar objetivo a cada subida de nivel
+                setTarget();
+                // make spawn faster
+                clearInterval(spawnIntervalId);
+                spawnIntervalId = setInterval(spawnCard, Math.max(500, 1600 - level*120));
+            }
+        }
+
+        function flashMeter(){
+            const perc = Math.min(100, (score/200)*100);
+            meterFill.style.width = perc + '%';
+        }
+
+        // Botones
+        startBtn.addEventListener('click', () => {
+            startGame();
+        });
+        pauseBtn.addEventListener('click', () => {
+            if(running) { pauseGame(); pauseBtn.textContent = 'Continuar'; }
+            else {
+                // resume
+                running = true;
+                spawnIntervalId = setInterval(spawnCard, Math.max(700, 1600 - level*120));
+                moveIntervalId = setInterval(moveCards, 16);
+                pauseBtn.textContent = 'Pausar';
+            }
+        });
+
+        // inicial
+        updateLivesDisplay();
+        targetEl.textContent = 'Objetivo: pulsa Iniciar juego';
+    })();
+</script>
+</body>
+</html>
