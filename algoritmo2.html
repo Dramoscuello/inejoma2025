@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Presentación Interactiva</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      background-color: #f0f0f0;
+    }
+
+    .container {
+      width: 800px;
+      padding: 20px;
+      background-color: white;
+      border-radius: 8px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+    }
+
+    .slide {
+      display: none;
+    }
+
+    .slide.active {
+      display: block;
+    }
+
+    .text-content {
+      margin-bottom: 20px;
+      line-height: 1.6;
+    }
+
+    .blank {
+      border-bottom: 2px dashed #000;
+      display: inline-block;
+      width: 100px;
+      height: 1.2em;
+      text-align: center;
+      margin: 0 4px;
+      vertical-align: middle;
+    }
+
+    .word-bank {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 20px;
+    }
+
+    .word {
+      padding: 8px 12px;
+      background-color: #e0e0e0;
+      border: 1px solid #ccc;
+      cursor: grab;
+      border-radius: 4px;
+    }
+
+    .word.dragging {
+      opacity: 0.5;
+    }
+
+    /* .blank.filled se ha eliminado para no dar pistas */
+
+    .controls {
+      margin-top: 20px;
+      text-align: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      margin: 0 5px;
+      cursor: pointer;
+    }
+
+    #restart-btn {
+      background-color: #f44336;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    #next-btn, #check-btn {
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+    }
+
+    .feedback {
+      margin-top: 15px;
+      font-weight: bold;
+      color: red;
+    }
+
+    .success {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <div id="slide1" class="slide active">
+      <h2 id="title1">Título del Párrafo</h2>
+      <div id="full-text" class="text-content"></div>
+      <div class="controls">
+        <button id="next-btn">Siguiente</button>
+      </div>
+    </div>
+
+    <div id="slide2" class="slide">
+      <h2 id="title2">Título del Párrafo</h2>
+      <div id="fill-blanks-text" class="text-content"></div>
+      <div id="word-bank" class="word-bank"></div>
+      <div id="feedback" class="feedback"></div>
+      <div class="controls">
+        <button id="check-btn">Comprobar</button>
+        <button id="restart-btn">Reiniciar Juego</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Lista de párrafos con títulos
+    const paragraphs = [
+      {
+        title: "Algoritmos",
+        text: `Un algoritmo es una secuencia ordenada de pasos que permite resolver un problema o realizar una tarea específica. Cada paso debe estar pensado para cumplir una función dentro del proceso general, asegurando que el resultado sea el esperado. Los algoritmos ayudan a organizar las ideas y a planificar acciones antes de ponerlas en práctica. En la vida cotidiana, muchas de nuestras actividades siguen algoritmos sin que lo notemos. Comprenderlos es esencial para aprender a programar de manera lógica y estructurada.`
+      },
+      {
+        title: "Variables",
+        text: `Las variables son espacios donde se guarda información que puede cambiar durante el desarrollo de una actividad o programa. Sirven para mantener datos que luego se pueden usar, comparar o modificar según las necesidades del proceso. Su función principal es permitir que los programas recuerden valores importantes en cada momento. Gracias a las variables, una acción puede adaptarse a distintas situaciones o resultados. Son una herramienta básica para que un algoritmo pueda funcionar con flexibilidad y precisión.`
+      },
+      {
+        title: "Condicionales",
+        text: `Los condicionales permiten que una acción dependa de una situación o decisión específica. Funcionan como una forma de elegir qué camino seguir cuando se presentan diferentes posibilidades. Gracias a ellos, un proceso puede reaccionar de manera distinta según las circunstancias que se presenten. Esto hace que los algoritmos sean más inteligentes y dinámicos, ya que no siempre ejecutan lo mismo. Los condicionales representan la capacidad de tomar decisiones dentro de un conjunto de instrucciones.`
+      },
+      {
+        title: "Ciclos",
+        text: `Los ciclos son estructuras que permiten repetir una o varias acciones varias veces sin tener que escribirlas de nuevo. Facilitan la ejecución continua de tareas hasta que se cumpla una condición o se alcance un objetivo. Este tipo de repetición es muy útil cuando se necesita realizar procesos largos o continuos de forma automática. Los ciclos ayudan a simplificar y optimizar los algoritmos, evitando repeticiones innecesarias. Gracias a ellos, los programas pueden mantener una actividad constante o repetitiva de manera eficiente.`
+      }
+    ];
+
+    let currentParagraph = "";
+    let currentTitle = "";
+    let wordsInParagraph = [];
+    let selectedWords = [];
+    let blanks = [];
+    let blankElements = [];
+    let wordElements = [];
+    let completedSlides = 0;
+    const totalSlides = paragraphs.length;
+
+    // Seleccionar un párrafo al azar
+    function selectRandomParagraph() {
+      const availableParagraphs = paragraphs.filter(p => !usedParagraphs.includes(p.text));
+      if (availableParagraphs.length === 0) {
+        alert("¡Has completado todos los párrafos!");
+        location.reload(); // Reiniciar juego si se completan todos
+        return false;
+      }
+      const index = Math.floor(Math.random() * availableParagraphs.length);
+      const selected = availableParagraphs[index];
+      currentParagraph = selected.text;
+      currentTitle = selected.title;
+      usedParagraphs.push(currentParagraph);
+      // Expresión regular para capturar palabras completas, incluyendo tildes
+      wordsInParagraph = currentParagraph.match(/\b[\p{L}\p{N}]+\b/gu) || [];
+      return true;
+    }
+
+    let usedParagraphs = [];
+
+    // Mostrar slide 1
+    function showSlide1() {
+      document.getElementById("title1").textContent = currentTitle;
+      document.getElementById("full-text").textContent = currentParagraph;
+      document.getElementById("slide1").classList.add("active");
+      document.getElementById("slide2").classList.remove("active");
+    }
+
+    // Seleccionar 5 palabras al azar
+    function selectRandomWords() {
+      const uniqueWords = [...new Set(wordsInParagraph)];
+      if (uniqueWords.length < 5) {
+        alert("No hay suficientes palabras únicas en el párrafo.");
+        return;
+      }
+      selectedWords = [];
+      for (let i = 0; i < 5; i++) {
+        const randomIndex = Math.floor(Math.random() * uniqueWords.length);
+        selectedWords.push(uniqueWords[randomIndex]);
+        uniqueWords.splice(randomIndex, 1);
+      }
+      selectedWords.sort(() => Math.random() - 0.5); // Mezclar las palabras
+    }
+
+    // Crear slide 2 con huecos
+    function createSlide2() {
+      document.getElementById("title2").textContent = currentTitle;
+
+      let modifiedText = currentParagraph;
+      const wordsToReplace = [...selectedWords]; // Copia para no alterar la original
+
+      // Reemplazar solo una instancia de cada palabra
+      wordsToReplace.forEach(word => {
+        // Escapar caracteres especiales de la palabra para la regex
+        const escapedWord = word.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        // Reemplazar la primera instancia de la palabra (insensible a mayúsculas y con soporte Unicode)
+        modifiedText = modifiedText.replace(new RegExp(`\\b${escapedWord}\\b`, 'iu'), '<span class="blank" data-word="' + word.toLowerCase() + '"></span>');
+      });
+
+      document.getElementById("fill-blanks-text").innerHTML = modifiedText;
+
+      blankElements = Array.from(document.querySelectorAll('.blank'));
+
+      const wordBank = document.getElementById("word-bank");
+      wordBank.innerHTML = '';
+      wordElements = [];
+      selectedWords.forEach((word, index) => {
+        const span = document.createElement("span");
+        span.className = "word";
+        span.textContent = word;
+        span.setAttribute("draggable", "true");
+        span.setAttribute("data-index", index);
+        wordElements.push(span);
+        wordBank.appendChild(span);
+
+        span.addEventListener("dragstart", (e) => {
+          e.dataTransfer.setData("text/plain", index);
+          span.classList.add("dragging");
+        });
+      });
+
+      blankElements.forEach(blank => {
+        blank.addEventListener("dragover", (e) => {
+          e.preventDefault();
+        });
+
+        blank.addEventListener("drop", (e) => {
+          e.preventDefault();
+          const index = e.dataTransfer.getData("text/plain");
+          const originalWord = selectedWords[index];
+          const draggedWord = wordElements[index];
+
+          if (!blank.hasAttribute("data-filled")) {
+            blank.textContent = originalWord;
+            blank.setAttribute("data-filled", "true");
+            // No se agrega clase .filled para evitar la línea verde
+            draggedWord.style.display = "none";
+          }
+        });
+      });
+    }
+
+    // Verificar si todas las palabras están correctamente colocadas
+    function checkAnswers() {
+      const filled = blankElements.filter(b => b.hasAttribute("data-filled"));
+      if (filled.length < 5) {
+        alert("Debes completar todos los huecos antes de comprobar.");
+        return;
+      }
+
+      const allCorrect = filled.every(b => b.getAttribute("data-word") === b.textContent.toLowerCase());
+      if (allCorrect) {
+        document.getElementById("feedback").innerHTML = '<span class="success">¡Enhorabuena! Has completado este párrafo.</span>';
+        setTimeout(() => {
+          document.getElementById("feedback").textContent = "";
+          completedSlides++;
+          if (completedSlides >= totalSlides) {
+            alert("¡Felicidades! Has completado todos los párrafos.");
+            location.reload(); // Reiniciar juego
+          } else {
+            restartGame();
+          }
+        }, 3000);
+      } else {
+        // --- CORRECCIÓN: Mostrar mensaje de perdiste y ocultar el contenedor ---
+        alert("¡Perdiste!");
+        document.querySelector('.container').style.display = 'none';
+        // No se reinicia automáticamente, se espera que el jugador recargue la página
+      }
+    }
+
+    // Reiniciar el juego
+    function restartGame() {
+      document.getElementById("feedback").textContent = "";
+      if (!selectRandomParagraph()) return;
+      selectRandomWords();
+      showSlide1();
+    }
+
+    // Inicializar
+    document.addEventListener("DOMContentLoaded", () => {
+      if (!selectRandomParagraph()) return;
+      selectRandomWords();
+      showSlide1();
+
+      document.getElementById("next-btn").addEventListener("click", () => {
+        document.getElementById("slide1").classList.remove("active");
+        document.getElementById("slide2").classList.add("active");
+        createSlide2();
+      });
+
+      document.getElementById("check-btn").addEventListener("click", checkAnswers);
+
+      document.getElementById("restart-btn").addEventListener("click", () => {
+        location.reload();
+      });
+    });
+  </script>
+
+</body>
+</html>
