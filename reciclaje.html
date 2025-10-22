@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ahorcado - Ciclo de Vida Tecnológico</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #667eea;
+            text-align: center;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .game-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .info-box {
+            background: #f8f9fa;
+            padding: 15px 25px;
+            border-radius: 10px;
+            text-align: center;
+            min-width: 150px;
+        }
+
+        .info-label {
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .info-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .timer {
+            color: #e74c3c;
+        }
+
+        .lives {
+            color: #e74c3c;
+            font-size: 2em;
+        }
+
+        .word-display {
+            text-align: center;
+            margin: 40px 0;
+            font-size: 3em;
+            letter-spacing: 10px;
+            font-weight: bold;
+            color: #2c3e50;
+            min-height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .hint {
+            text-align: center;
+            color: #7f8c8d;
+            font-style: italic;
+            margin-bottom: 30px;
+            font-size: 1.1em;
+        }
+
+        .keyboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(45px, 1fr));
+            gap: 8px;
+            margin-bottom: 30px;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .key {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.2em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .key:hover:not(:disabled) {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .key:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .key.wrong {
+            background: #e74c3c;
+        }
+
+        .message {
+            text-align: center;
+            font-size: 1.5em;
+            margin: 20px 0;
+            min-height: 40px;
+            font-weight: bold;
+        }
+
+        .success {
+            color: #27ae60;
+        }
+
+        .error {
+            color: #e74c3c;
+        }
+
+        .buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .btn {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+
+        .game-over-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .game-over-box {
+            background: white;
+            padding: 40px;
+            border-radius: 20px;
+            text-align: center;
+            max-width: 500px;
+            width: 90%;
+        }
+
+        .game-over-box h2 {
+            font-size: 2.5em;
+            margin-bottom: 20px;
+            color: #667eea;
+        }
+
+        .game-over-box p {
+            font-size: 1.3em;
+            margin: 15px 0;
+            color: #2c3e50;
+        }
+
+        .stats {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .stats p {
+            margin: 10px 0;
+            font-size: 1.1em;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .word-display {
+                font-size: 2em;
+                letter-spacing: 5px;
+            }
+
+            .keyboard {
+                grid-template-columns: repeat(7, 1fr);
+                gap: 5px;
+            }
+
+            .key {
+                padding: 10px;
+                font-size: 1em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Ahorcado Tecnológico</h1>
+        <p class="subtitle">Ciclo de Vida de los Productos Tecnológicos</p>
+
+        <div class="game-info">
+            <div class="info-box">
+                <div class="info-label">Tiempo</div>
+                <div class="info-value timer" id="timer">3:00</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Vidas</div>
+                <div class="info-value lives" id="lives">❤️</div>
+            </div>
+            <div class="info-box">
+                <div class="info-label">Palabras</div>
+                <div class="info-value" id="progress">0/15</div>
+            </div>
+        </div>
+
+        <div class="hint" id="hint"></div>
+        <div class="word-display" id="wordDisplay"></div>
+        <div class="message" id="message"></div>
+
+        <div class="keyboard" id="keyboard"></div>
+
+        <div class="buttons">
+            <button class="btn" onclick="newWord()">Nueva Palabra</button>
+            <button class="btn" onclick="resetGame()">Reiniciar Juego</button>
+        </div>
+    </div>
+
+    <div class="game-over-overlay" id="gameOverOverlay">
+        <div class="game-over-box">
+            <h2 id="gameOverTitle"></h2>
+            <p id="gameOverMessage"></p>
+            <div class="stats" id="finalStats"></div>
+            <button class="btn" onclick="resetGame()">Jugar de Nuevo</button>
+        </div>
+    </div>
+
+    <script>
+        const words = [
+            { word: "TECNOLÓGICO", hint: "Relacionado con la tecnología" },
+            { word: "FABRICACIÓN", hint: "Primera etapa del ciclo de vida" },
+            { word: "MATERIALES", hint: "Necesarios para crear productos" },
+            { word: "COMPONENTES", hint: "Partes de un dispositivo electrónico" },
+            { word: "ENERGÍA", hint: "Se consume en la producción" },
+            { word: "AMBIENTAL", hint: "Tipo de impacto que genera la tecnología" },
+            { word: "USUARIO", hint: "Persona que utiliza el producto" },
+            { word: "FUNCIÓN", hint: "Propósito de un producto" },
+            { word: "DESECHO", hint: "Última fase del ciclo de vida" },
+            { word: "OBSOLETO", hint: "Producto que deja de ser útil" },
+            { word: "RECICLAJE", hint: "Proceso importante para reducir residuos" },
+            { word: "CONTAMINAR", hint: "Lo que pueden hacer los desechos mal gestionados" },
+            { word: "SOSTENIBLES", hint: "Empresas que cuidan el medio ambiente" },
+            { word: "RESPONSABLE", hint: "Tipo de uso que debemos hacer de la tecnología" },
+            { word: "REUTILIZACIÓN", hint: "Dar un nuevo uso a los productos" }
+        ];
+
+        let currentWord = '';
+        let currentHint = '';
+        let displayWord = [];
+        let usedLetters = new Set();
+        let wordsCompleted = 0;
+        let lives = 3;
+        let timeLeft = 180; // 3 minutos
+        let timerInterval;
+        let gameActive = false;
+        let usedWords = new Set();
+
+        const alphabet = 'ABCDEFGHIJKLMNOPQRSTUVWXYZÑ'.split('');
+
+        function init() {
+            createKeyboard();
+            resetGame();
+        }
+
+        function createKeyboard() {
+            const keyboard = document.getElementById('keyboard');
+            keyboard.innerHTML = '';
+            alphabet.forEach(letter => {
+                const key = document.createElement('button');
+                key.className = 'key';
+                key.textContent = letter;
+                key.onclick = () => guessLetter(letter);
+                key.id = `key-${letter}`;
+                keyboard.appendChild(key);
+            });
+        }
+
+        function startTimer() {
+            clearInterval(timerInterval);
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                updateTimer();
+                if (timeLeft <= 0) {
+                    endGame(false, '⏰ ¡Se acabó el tiempo!');
+                }
+            }, 1000);
+        }
+
+        function updateTimer() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            document.getElementById('timer').textContent = 
+                `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        }
+
+        function resetGame() {
+            wordsCompleted = 0;
+            lives = 3;
+            timeLeft = 180;
+            gameActive = true;
+            usedWords.clear();
+            document.getElementById('lives').textContent = '❤️❤️❤️';
+            document.getElementById('progress').textContent = `${wordsCompleted}/15`;
+            document.getElementById('gameOverOverlay').style.display = 'none';
+            updateTimer();
+            startTimer();
+            newWord();
+        }
+
+        function newWord() {
+            if (!gameActive) return;
+
+            // Si ya completó todas las palabras
+            if (usedWords.size === words.length) {
+                endGame(true, '🎉 ¡Completaste todas las palabras!');
+                return;
+            }
+
+            // Seleccionar una palabra no usada
+            let availableWords = words.filter(w => !usedWords.has(w.word));
+            let selected = availableWords[Math.floor(Math.random() * availableWords.length)];
+            
+            currentWord = selected.word;
+            currentHint = selected.hint;
+            displayWord = Array(currentWord.length).fill('_');
+            usedLetters.clear();
+
+            document.getElementById('hint').textContent = `💡 Pista: ${currentHint}`;
+            document.getElementById('message').textContent = '';
+            updateDisplay();
+            resetKeyboard();
+        }
+
+        function resetKeyboard() {
+            alphabet.forEach(letter => {
+                const key = document.getElementById(`key-${letter}`);
+                key.disabled = false;
+                key.classList.remove('wrong');
+            });
+        }
+
+        function guessLetter(letter) {
+            if (!gameActive || usedLetters.has(letter)) return;
+
+            usedLetters.add(letter);
+            const key = document.getElementById(`key-${letter}`);
+            key.disabled = true;
+
+            if (currentWord.includes(letter)) {
+                // Letra correcta
+                for (let i = 0; i < currentWord.length; i++) {
+                    if (currentWord[i] === letter) {
+                        displayWord[i] = letter;
+                    }
+                }
+                updateDisplay();
+
+                // Verificar si completó la palabra
+                if (!displayWord.includes('_')) {
+                    wordsCompleted++;
+                    usedWords.add(currentWord);
+                    document.getElementById('progress').textContent = `${wordsCompleted}/15`;
+                    document.getElementById('message').innerHTML = 
+                        '<span class="success">✅ ¡Correcto!</span>';
+                    
+                    if (wordsCompleted === 15) {
+                        setTimeout(() => endGame(true, '🏆 ¡Ganaste! Completaste las 15 palabras'), 1500);
+                    } else {
+                        setTimeout(() => newWord(), 1500);
+                    }
+                }
+            } else {
+                // Letra incorrecta
+                key.classList.add('wrong');
+                lives--;
+                
+                // Actualizar visualización de corazones
+                let heartsDisplay = '';
+                for (let i = 0; i < lives; i++) {
+                    heartsDisplay += '❤️';
+                }
+                for (let i = 0; i < (3 - lives); i++) {
+                    heartsDisplay += '💔';
+                }
+                document.getElementById('lives').textContent = heartsDisplay;
+                
+                if (lives <= 0) {
+                    endGame(false, `😢 Perdiste. La palabra era: ${currentWord}`);
+                }
+            }
+        }
+
+        function updateDisplay() {
+            document.getElementById('wordDisplay').textContent = displayWord.join(' ');
+        }
+
+        function endGame(won, message) {
+            gameActive = false;
+            clearInterval(timerInterval);
+
+            const overlay = document.getElementById('gameOverOverlay');
+            const title = document.getElementById('gameOverTitle');
+            const msg = document.getElementById('gameOverMessage');
+            const stats = document.getElementById('finalStats');
+
+            title.textContent = won ? '¡Felicitaciones!' : 'Fin del Juego';
+            msg.textContent = message;
+
+            const timeUsed = 180 - timeLeft;
+            const minutes = Math.floor(timeUsed / 60);
+            const seconds = timeUsed % 60;
+
+            stats.innerHTML = `
+                <p><strong>Palabras completadas:</strong> ${wordsCompleted}/15</p>
+                <p><strong>Tiempo utilizado:</strong> ${minutes}:${seconds.toString().padStart(2, '0')}</p>
+            `;
+
+            overlay.style.display = 'flex';
+        }
+
+        // Inicializar el juego
+        init();
+    </script>
+</body>
+</html>
